@@ -1,15 +1,23 @@
 "use client";
 import React from "react";
+import Link from "next/link";
 type NavbarProps = {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 };
 export const Navbar = ({ open, setOpen }: NavbarProps) => {
   return (
-    <nav className="fixed top-0 w-full bg-[#0D0D0D] text-white p-4 lg:hidden block">
+    <nav className="fixed top-0 w-full bg-[#0D0D0D] text-white p-4">
       <div className="flex items-center justify-between">
-        <img className="w-8" src="https://chat.aifiesta.ai/static/images/logo/icon.png" alt="" />
-        <div className="flex items-center gap-2">
+      <Link href="/login">
+        <img
+          className="w-8"
+          src="https://chat.aifiesta.ai/static/images/logo/icon.png"
+          alt="AiFiesta Logo"
+        />
+      </Link>
+
+        <div className="flex items-center gap-2 lg:hidden">
           <button
             className="inline-flex items-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:text-accent-foreground h-10 w-10 hover:bg-accent justify-center p-0"
             type="button"

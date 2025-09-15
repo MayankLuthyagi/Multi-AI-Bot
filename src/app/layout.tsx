@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Main }  from "../component/main";
-import { Sidebar }  from "../component/sidebar";
+import { Sidebar } from "../component/sidebar";
 import ClientLayout from "../component/ClientLayout";
 
 export const metadata: Metadata = {
@@ -11,13 +9,12 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-
   return (
     <html lang="en">
       <body>
         <ClientLayout>
           <Sidebar />
-          <Main />
+          {children}
         </ClientLayout>
       </body>
     </html>
