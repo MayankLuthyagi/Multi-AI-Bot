@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Sidebar } from "../component/sidebar";
 import ClientLayout from "../component/ClientLayout";
 
 export const metadata: Metadata = {
@@ -13,7 +12,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <ClientLayout>
-          <Sidebar />
           {children}
         </ClientLayout>
       </body>
