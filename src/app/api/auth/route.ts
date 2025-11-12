@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/src/lib/db';
+import { createSession } from '@/src/lib/session';
 import bcrypt from 'bcryptjs';
 
 export async function login(name: string, email: string, password: string, requestUrl?: string) {
@@ -18,6 +19,9 @@ export async function login(name: string, email: string, password: string, reque
     if (!match) {
         return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
+
+    // Create session
+    await createSession(user._id.toString(), user.email);
 
     // Next.js requires absolute URLs for redirects in some runtimes (middleware/edge).
     // Build an absolute URL from the incoming request URL when available.
