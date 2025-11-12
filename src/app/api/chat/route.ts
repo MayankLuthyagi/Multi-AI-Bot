@@ -15,11 +15,16 @@ function getNestedValue(obj: any, path: string): string {
 }
 
 // Build request body based on provider
-function buildRequestBody(provider: string, modelId: string, message: string): any {
+function buildRequestBody(provider: string, modelId: string, message: string, conversationHistory?: Array<{ role: string, content: string }>): any {
     const baseParams = {
         temperature: 0.7,
         max_tokens: 1000,
     };
+
+    // Prepare messages array with conversation history
+    const messages = conversationHistory && conversationHistory.length > 0
+        ? [...conversationHistory, { role: 'user', content: message }]
+        : [{ role: 'user', content: message }];
 
     switch (provider) {
         case 'OpenAI':
@@ -29,22 +34,31 @@ function buildRequestBody(provider: string, modelId: string, message: string): a
         case 'Perplexity AI':
             return {
                 model: modelId,
-                messages: [{ role: 'user', content: message }],
+                messages: messages,
                 ...baseParams,
             };
 
         case 'Anthropic':
             return {
                 model: modelId,
-                messages: [{ role: 'user', content: message }],
+                messages: messages,
                 max_tokens: 1000,
             };
 
         case 'Google':
+            // Google uses a different format - convert messages to contents
+            const contents = conversationHistory && conversationHistory.length > 0
+                ? [
+                    ...conversationHistory.map(msg => ({
+                        role: msg.role === 'assistant' ? 'model' : 'user',
+                        parts: [{ text: msg.content }]
+                    })),
+                    { role: 'user', parts: [{ text: message }] }
+                ]
+                : [{ role: 'user', parts: [{ text: message }] }];
+
             return {
-                contents: [{
-                    parts: [{ text: message }]
-                }],
+                contents: contents,
                 generationConfig: {
                     temperature: 0.7,
                     maxOutputTokens: 1000,
@@ -53,7 +67,7 @@ function buildRequestBody(provider: string, modelId: string, message: string): a
 
         default:
             return {
-                messages: [{ role: 'user', content: message }],
+                messages: messages,
                 ...baseParams,
             };
     }
@@ -62,7 +76,7 @@ function buildRequestBody(provider: string, modelId: string, message: string): a
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { modalId, message, apiEndpoint, apiKey, provider, modelId, headers, responsePath } = body;
+        const { modalId, message, apiEndpoint, apiKey, provider, modelId, headers, responsePath, conversationHistory } = body;
 
         if (!modalId || !message || !apiEndpoint) {
             return NextResponse.json(
@@ -97,8 +111,8 @@ export async function POST(request: NextRequest) {
             finalEndpoint = finalEndpoint.replace('{{MODEL_ID}}', modelId);
         }
 
-        // Build request body based on provider
-        const requestBody = buildRequestBody(provider || 'OpenAI', modelId, message);
+        // Build request body based on provider with conversation history
+        const requestBody = buildRequestBody(provider || 'OpenAI', modelId, message, conversationHistory);
 
         // Make request to the AI modal's API
         try {

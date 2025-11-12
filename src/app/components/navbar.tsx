@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Menu, X, User } from "lucide-react";
+import { Menu, X, User, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface Modal {
@@ -56,6 +56,15 @@ export default function Navbar() {
     const navigateToProfile = () => {
         setOpenHamburger(false);
         router.push("/profile");
+    };
+
+    const handleLogout = async () => {
+        try {
+            await fetch("/api/auth/logout", { method: "POST" });
+            router.push("/");
+        } catch (error) {
+            console.error("Error logging out:", error);
+        }
     };
 
     return (
@@ -150,6 +159,14 @@ export default function Navbar() {
                     >
                         <User className="h-5 w-5" />
                         Profile
+                    </button>
+
+                    <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2 text-left p-2 rounded-md hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"
+                    >
+                        <LogOut className="h-5 w-5" />
+                        Logout
                     </button>
                 </div>
             </div>
