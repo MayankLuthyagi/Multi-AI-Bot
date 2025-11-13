@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Bot, Send, Loader2, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Bot, Send, Loader2, ThumbsUp, ThumbsDown,Copy } from "lucide-react";
 
 // Import the reusable menu component
 import SideMenu from "../components/SideMenu"; // Adjust this path if needed
@@ -448,6 +448,12 @@ export default function DashboardPage() {
         });
     };
 
+    const copyResponseToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text).then(() => {
+            alert("Response copied to clipboard!");
+        });
+    };
+
     // toggleModalStatus, navigateToProfile, and handleLogout have been REMOVED
 
     return (
@@ -545,6 +551,16 @@ export default function DashboardPage() {
                                                                     title="Dislike this response"
                                                                 >
                                                                     <ThumbsDown className="h-3.5 w-3.5" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => copyResponseToClipboard(msg.content)}
+                                                                    className={`p-1 rounded hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors ${msg.feedback === 'dislike'
+                                                                        ? 'text-red-600 dark:text-red-400'
+                                                                        : 'text-gray-400 dark:text-gray-500'
+                                                                        }`}
+                                                                    title="Copy response"
+                                                                >
+                                                                    <Copy className="h-3.5 w-3.5" />
                                                                 </button>
                                                             </div>
                                                         )}
