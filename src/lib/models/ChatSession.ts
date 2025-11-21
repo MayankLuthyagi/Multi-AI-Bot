@@ -5,6 +5,14 @@ export interface Message {
     content: string;
     timestamp: Date;
     feedback?: 'like' | 'dislike' | null; // User feedback on assistant responses
+    image?: string; // Base64 encoded image for user messages
+    tokenUsage?: {
+        inputTokens: number;
+        outputTokens: number;
+        totalTokens: number;
+        estimatedCost: number;
+        isEstimated?: boolean; // True if tokens were estimated, not from API
+    };
 }
 
 export interface ChatSession {

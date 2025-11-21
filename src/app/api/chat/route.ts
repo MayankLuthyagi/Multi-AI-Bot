@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { connectToDatabase } from '@/src/lib/db';
+import { Modal, ModalCollection, ProviderConfig, ProviderConfigCollection } from '@/src/lib/models/Modal';
+import { calculateConversationTokens, calculateCost } from '@/src/lib/tokenCounter';
+import { getSession } from '@/src/lib/session';
+import { ObjectId } from 'mongodb';
 
 // Helper function to extract response using path notation
 function getNestedValue(obj: any, path: string): string {
@@ -15,22 +20,42 @@ function getNestedValue(obj: any, path: string): string {
 }
 
 // Build request body based on provider
-function buildRequestBody(provider: string, modelId: string, message: string, conversationHistory?: Array<{ role: string, content: string }>): any {
+function buildRequestBody(provider: string, modelId: string, message: string, conversationHistory?: Array<{ role: string, content: string }>, image?: string): any {
     const baseParams = {
         temperature: 0.7,
         max_tokens: 1000,
     };
 
     // Prepare messages array with conversation history
-    const messages = conversationHistory && conversationHistory.length > 0
-        ? [...conversationHistory, { role: 'user', content: message }]
-        : [{ role: 'user', content: message }];
+    let messages = conversationHistory && conversationHistory.length > 0
+        ? [...conversationHistory]
+        : [];
+
+    // Add current message with image support
+    if (image) {
+        // Handle vision-capable models with image
+        const imageMessage: any = {
+            role: 'user',
+            content: [
+                { type: 'text', text: message },
+                {
+                    type: 'image_url',
+                    image_url: {
+                        url: image // Base64 data URL
+                    }
+                }
+            ]
+        };
+        messages.push(imageMessage);
+    } else {
+        // Regular text message
+        messages.push({ role: 'user', content: message });
+    }
 
     switch (provider) {
         case 'OpenAI':
         case 'DeepSeek':
         case 'xAI':
-        case 'Mistral AI':
         case 'Perplexity AI':
             return {
                 model: modelId,
@@ -39,6 +64,40 @@ function buildRequestBody(provider: string, modelId: string, message: string, co
             };
 
         case 'Anthropic':
+            // Anthropic vision format
+            if (image) {
+                // Extract base64 data and media type from data URL
+                const matches = image.match(/^data:([^;]+);base64,(.+)$/);
+                if (matches) {
+                    const mediaType = matches[1];
+                    const base64Data = matches[2];
+
+                    const visionMessage: any = {
+                        role: 'user',
+                        content: [
+                            {
+                                type: 'image',
+                                source: {
+                                    type: 'base64',
+                                    media_type: mediaType,
+                                    data: base64Data
+                                }
+                            },
+                            { type: 'text', text: message }
+                        ]
+                    };
+
+                    const anthropicMessages = conversationHistory && conversationHistory.length > 0
+                        ? [...conversationHistory, visionMessage]
+                        : [visionMessage];
+
+                    return {
+                        model: modelId,
+                        messages: anthropicMessages,
+                        max_tokens: 1000,
+                    };
+                }
+            }
             return {
                 model: modelId,
                 messages: messages,
@@ -47,15 +106,37 @@ function buildRequestBody(provider: string, modelId: string, message: string, co
 
         case 'Google':
             // Google uses a different format - convert messages to contents
-            const contents = conversationHistory && conversationHistory.length > 0
-                ? [
-                    ...conversationHistory.map(msg => ({
-                        role: msg.role === 'assistant' ? 'model' : 'user',
-                        parts: [{ text: msg.content }]
-                    })),
-                    { role: 'user', parts: [{ text: message }] }
-                ]
-                : [{ role: 'user', parts: [{ text: message }] }];
+            let contents = conversationHistory && conversationHistory.length > 0
+                ? conversationHistory.map(msg => ({
+                    role: msg.role === 'assistant' ? 'model' : 'user',
+                    parts: [{ text: msg.content }]
+                }))
+                : [];
+
+            // Add current message with image if present
+            if (image) {
+                // Extract base64 data from data URL
+                const matches = image.match(/^data:([^;]+);base64,(.+)$/);
+                if (matches) {
+                    const mimeType = matches[1];
+                    const base64Data = matches[2];
+
+                    contents.push({
+                        role: 'user',
+                        parts: [
+                            { text: message },
+                            {
+                                inline_data: {
+                                    mime_type: mimeType,
+                                    data: base64Data
+                                }
+                            }
+                        ]
+                    });
+                }
+            } else {
+                contents.push({ role: 'user', parts: [{ text: message }] });
+            }
 
             return {
                 contents: contents,
@@ -76,7 +157,7 @@ function buildRequestBody(provider: string, modelId: string, message: string, co
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { modalId, message, apiEndpoint, apiKey, provider, modelId, headers, responsePath, conversationHistory } = body;
+        const { modalId, message, image, apiEndpoint, apiKey, provider, modelId, headers, responsePath, conversationHistory, sessionId } = body;
 
         if (!modalId || !message || !apiEndpoint) {
             return NextResponse.json(
@@ -84,6 +165,10 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             );
         }
+
+        // Get user info from session
+        const session = await getSession();
+        const userId = session?.email || 'anonymous';
 
         // Build custom headers with API key replacement
         let requestHeaders: Record<string, string> = {
@@ -111,8 +196,8 @@ export async function POST(request: NextRequest) {
             finalEndpoint = finalEndpoint.replace('{{MODEL_ID}}', modelId);
         }
 
-        // Build request body based on provider with conversation history
-        const requestBody = buildRequestBody(provider || 'OpenAI', modelId, message, conversationHistory);
+        // Build request body based on provider with conversation history and image
+        const requestBody = buildRequestBody(provider || 'OpenAI', modelId, message, conversationHistory, image);
 
         // Make request to the AI modal's API
         try {
@@ -172,10 +257,122 @@ export async function POST(request: NextRequest) {
 
             // Preserve formatting - don't strip newlines or special characters
 
+            // Extract token usage from provider response
+            let inputTokens = 0;
+            let outputTokens = 0;
+            let usedEstimation = false;
+
+            // OpenAI/DeepSeek/xAI/Perplexity format
+            if (data.usage && (data.usage.prompt_tokens || data.usage.input_tokens)) {
+                inputTokens = data.usage.prompt_tokens || data.usage.input_tokens || 0;
+                outputTokens = data.usage.completion_tokens || data.usage.output_tokens || 0;
+            }
+            // Google format
+            else if (data.usageMetadata) {
+                inputTokens = data.usageMetadata.promptTokenCount || 0;
+                outputTokens = data.usageMetadata.candidatesTokenCount || 0;
+            }
+            // Fallback: Estimate tokens if API doesn't provide them
+            else {
+                // Build full conversation context for accurate estimation
+                let fullInputText = message;
+                if (conversationHistory && conversationHistory.length > 0) {
+                    fullInputText = conversationHistory.map(msg => msg.content).join('\n') + '\n' + message;
+                }
+
+                const tokenEstimates = calculateConversationTokens(fullInputText, aiResponse, []);
+                inputTokens = tokenEstimates.inputTokens;
+                outputTokens = tokenEstimates.outputTokens;
+                usedEstimation = true;
+                console.log(`⚠️ API didn't provide token counts for ${provider}. Using estimation: input=${inputTokens}, output=${outputTokens}`);
+            }
+
+            // Update modal token usage and cost in database
+            try {
+                const { db } = await connectToDatabase();
+                const { Modal: ModalModel, ModalCollection } = await import('@/src/lib/models/Modal');
+                const { ProviderConfig, ProviderConfigCollection } = await import('@/src/lib/models/Modal');
+                const { TokenUsageLogCollection } = await import('@/src/lib/models/TokenUsage');
+
+                // Get the modal to calculate cost
+                const modal = await db.collection(ModalCollection).findOne({ _id: new ObjectId(modalId) });
+
+                if (modal && inputTokens > 0 && outputTokens > 0) {
+                    // Calculate cost: (inputTokens / 1M) * inputPrice + (outputTokens / 1M) * outputPrice
+                    const inputCost = (inputTokens / 1000000) * (modal.inputPricePerMillion || 0);
+                    const outputCost = (outputTokens / 1000000) * (modal.outputPricePerMillion || 0);
+                    const totalCost = inputCost + outputCost;
+
+                    console.log(`💰 Token usage for ${modal.name}: Input=${inputTokens}, Output=${outputTokens}, Cost=$${totalCost.toFixed(6)}`);
+
+                    // 1. Save to permanent token usage log (survives chat deletion)
+                    await db.collection(TokenUsageLogCollection).insertOne({
+                        userId: userId,
+                        modalId: modalId,
+                        modalName: modal.name,
+                        provider: modal.provider,
+                        sessionId: sessionId || null, // Optional session reference
+                        inputTokens: inputTokens,
+                        outputTokens: outputTokens,
+                        totalTokens: inputTokens + outputTokens,
+                        inputCost: inputCost,
+                        outputCost: outputCost,
+                        totalCost: totalCost,
+                        isEstimated: usedEstimation,
+                        promptLength: message.length,
+                        responseLength: aiResponse.length,
+                        hadImage: !!image,
+                        createdAt: new Date()
+                    });
+
+                    // 2. Update modal token usage and cost (aggregated totals)
+                    await db.collection(ModalCollection).updateOne(
+                        { _id: new ObjectId(modalId) },
+                        {
+                            $inc: {
+                                inputTokensUsed: inputTokens,
+                                outputTokensUsed: outputTokens,
+                                totalCost: totalCost
+                            },
+                            $set: { updatedAt: new Date() }
+                        }
+                    );
+
+                    // 3. Update provider total tokens and deduct credit
+                    await db.collection(ProviderConfigCollection).updateOne(
+                        { provider: modal.provider },
+                        {
+                            $inc: {
+                                totalTokensUsed: inputTokens + outputTokens,
+                                credit: -totalCost // Deduct cost from credits
+                            },
+                            $set: { updatedAt: new Date() }
+                        }
+                    );
+                }
+            } catch (trackingError) {
+                console.error('Error tracking token usage:', trackingError);
+                // Don't fail the request if tracking fails
+            }
+
+            // Calculate cost for response
+            const { db } = await connectToDatabase();
+            const modal = await db.collection(ModalCollection).findOne({ _id: new ObjectId(modalId) });
+            const inputCost = modal ? (inputTokens / 1000000) * (modal.inputPricePerMillion || 0) : 0;
+            const outputCost = modal ? (outputTokens / 1000000) * (modal.outputPricePerMillion || 0) : 0;
+            const totalCost = inputCost + outputCost;
+
             return NextResponse.json({
                 success: true,
                 response: aiResponse,
                 modalId,
+                tokenUsage: inputTokens + outputTokens > 0 ? {
+                    inputTokens,
+                    outputTokens,
+                    totalTokens: inputTokens + outputTokens,
+                    estimatedCost: totalCost,
+                    isEstimated: usedEstimation
+                } : undefined
             });
 
         } catch (apiError: any) {

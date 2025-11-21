@@ -23,7 +23,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { name, provider, modelId, apiEndpoint, requestType, headers, responsePath, costPer1KTokens } = body;
+        const { name, provider, modelId, apiEndpoint, requestType, headers, responsePath, inputPricePerMillion, outputPricePerMillion } = body;
 
         if (!name || !provider || !modelId || !apiEndpoint || !requestType) {
             return NextResponse.json(
@@ -43,7 +43,11 @@ export async function POST(request: NextRequest) {
             headers: headers || {},
             responsePath: responsePath || 'choices[0].message.content',
             status: 'inactive', // Default to inactive, user enables from navbar
-            costPer1KTokens: costPer1KTokens || 0,
+            inputPricePerMillion: inputPricePerMillion || 0,
+            outputPricePerMillion: outputPricePerMillion || 0,
+            inputTokensUsed: 0,
+            outputTokensUsed: 0,
+            totalCost: 0,
             createdAt: new Date(),
             updatedAt: new Date(),
         };
@@ -67,25 +71,37 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
     try {
         const body = await request.json();
-        const { _id, ...updates } = body;
+        const { _id, action, status, ...updates } = body;
 
+        const { db } = await connectToDatabase();
+
+        // Bulk action: set all modals to a given status
+        if (action === 'setAllStatus' && (status === 'active' || status === 'inactive')) {
+            const result = await db.collection<Modal>(ModalCollection).updateMany(
+                {},
+                { $set: { status: status, updatedAt: new Date() } }
+            );
+
+            return NextResponse.json({ success: true, modifiedCount: result.modifiedCount });
+        }
+
+        // Single modal update
         if (!_id) {
             return NextResponse.json(
-                { success: false, error: 'Modal ID is required' },
+                { success: false, error: 'Modal ID is required for single updates' },
                 { status: 400 }
             );
         }
 
-        const { db } = await connectToDatabase();
+        // Build the update object, including status if provided
+        const updateFields: any = { ...updates, updatedAt: new Date() };
+        if (status !== undefined) {
+            updateFields.status = status;
+        }
 
         const result = await db.collection<Modal>(ModalCollection).updateOne(
             { _id: new ObjectId(_id) },
-            {
-                $set: {
-                    ...updates,
-                    updatedAt: new Date()
-                }
-            }
+            { $set: updateFields }
         );
 
         if (result.matchedCount === 0) {

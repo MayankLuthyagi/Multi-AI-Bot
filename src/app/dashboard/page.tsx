@@ -1,7 +1,9 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Bot, Send, Loader2, ThumbsUp, ThumbsDown,Copy } from "lucide-react";
+import { Bot, Send, Loader2, ThumbsUp, ThumbsDown, Copy, ImagePlus, X } from "lucide-react";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 // Import the reusable menu component
 import SideMenu from "../components/SideMenu"; // Adjust this path if needed
@@ -13,7 +15,8 @@ interface Modal {
     modelId: string;
     status: "active" | "inactive";
     apiEndpoint: string;
-    costPer1KTokens: number;
+    inputPricePerMillion: number;
+    outputPricePerMillion: number;
     headers?: Record<string, string>;
     responsePath?: string;
     requestType?: string;
@@ -31,6 +34,14 @@ interface Message {
     content: string;
     timestamp?: Date;
     feedback?: 'like' | 'dislike' | null; // User feedback on assistant responses
+    image?: string; // Base64 encoded image for user messages
+    tokenUsage?: {
+        inputTokens: number;
+        outputTokens: number;
+        totalTokens: number;
+        estimatedCost: number;
+        isEstimated?: boolean;
+    };
 }
 
 interface ChatSession {
@@ -51,6 +62,9 @@ export default function DashboardPage() {
     const [inputValue, setInputValue] = useState("");
     const [isSending, setIsSending] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const chatRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
     // Chat session management
@@ -281,6 +295,15 @@ export default function DashboardPage() {
                             updated[modal._id] = [];
                         }
                     });
+
+                    // Remove messages for deactivated modals to keep state clean
+                    const activeModalIds = new Set(activeModals.map((m: Modal) => m._id));
+                    Object.keys(updated).forEach(modalId => {
+                        if (!activeModalIds.has(modalId)) {
+                            delete updated[modalId];
+                        }
+                    });
+
                     return updated;
                 });
             }
@@ -312,6 +335,7 @@ export default function DashboardPage() {
             role: "user",
             content: inputValue.trim(),
             timestamp: new Date(),
+            image: uploadedImage || undefined,
         };
 
         const updatedMessages: { [key: string]: Message[] } = {};
@@ -325,7 +349,13 @@ export default function DashboardPage() {
         saveCurrentSession(updatedMessages); // Save after user message
 
         const currentInput = inputValue;
+        const currentImage = uploadedImage;
         setInputValue("");
+        setUploadedImage(null);
+        setImagePreview(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
         setIsSending(true);
 
         setTimeout(() => {
@@ -351,6 +381,7 @@ export default function DashboardPage() {
                     body: JSON.stringify({
                         modalId: modal._id,
                         message: currentInput,
+                        image: currentImage,
                         apiEndpoint: modal.apiEndpoint,
                         apiKey: providerConfig.api_key,
                         provider: modal.provider,
@@ -358,6 +389,7 @@ export default function DashboardPage() {
                         headers: modal.headers,
                         responsePath: modal.responsePath,
                         conversationHistory: conversationHistory, // Send full chat history
+                        sessionId: activeSessionId, // Send session ID for token tracking
                     }),
                 });
 
@@ -368,6 +400,7 @@ export default function DashboardPage() {
                         role: "assistant",
                         content: data.response,
                         timestamp: new Date(),
+                        tokenUsage: data.tokenUsage // Store token usage from API
                     };
 
                     setChatMessages((prev) => {
@@ -422,6 +455,46 @@ export default function DashboardPage() {
             e.preventDefault();
             sendToAllModals();
         }
+    };
+
+    // Handle image file selection
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            // Check file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                alert("Image size should be less than 5MB");
+                return;
+            }
+
+            // Check file type
+            if (!file.type.startsWith('image/')) {
+                alert("Please upload a valid image file");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64String = reader.result as string;
+                setUploadedImage(base64String);
+                setImagePreview(base64String);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    // Remove uploaded image
+    const removeImage = () => {
+        setUploadedImage(null);
+        setImagePreview(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    // Trigger file input click
+    const triggerImageUpload = () => {
+        fileInputRef.current?.click();
     };
 
     // Handle like/dislike feedback
@@ -496,7 +569,7 @@ export default function DashboardPage() {
                                                         {modal.name}
                                                     </h3>
                                                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                        {modal.provider} • ${modal.costPer1KTokens.toFixed(4)}/1K
+                                                        {modal.provider} • In: ${(modal.inputPricePerMillion ?? 0).toFixed(2)}/1M • Out: ${(modal.outputPricePerMillion ?? 0).toFixed(2)}/1M
                                                     </p>
                                                 </div>
                                                 <span className="h-2 w-2 rounded-full bg-green-500"></span>
@@ -526,42 +599,76 @@ export default function DashboardPage() {
                                                                 : "bg-gray-200 dark:bg-zinc-700 text-gray-900 dark:text-gray-100"
                                                                 }`}
                                                         >
-                                                            <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>
+                                                            {msg.role === "user" ? (
+                                                                <>
+                                                                    {msg.image && (
+                                                                        <img
+                                                                            src={msg.image}
+                                                                            alt="Uploaded"
+                                                                            className="max-w-full rounded mb-2 max-h-60 object-contain"
+                                                                        />
+                                                                    )}
+                                                                    <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>
+                                                                </>
+                                                            ) : (
+                                                                <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-table:my-2">
+                                                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                                        {msg.content}
+                                                                    </ReactMarkdown>
+                                                                </div>
+                                                            )}
                                                         </div>
 
                                                         {/* Like/Dislike buttons for assistant messages */}
                                                         {msg.role === "assistant" && (
-                                                            <div className="flex gap-1 mt-1 ml-2">
-                                                                <button
-                                                                    onClick={() => handleFeedback(modal._id, idx, 'like')}
-                                                                    className={`p-1 rounded hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors ${msg.feedback === 'like'
-                                                                        ? 'text-blue-600 dark:text-blue-400'
-                                                                        : 'text-gray-400 dark:text-gray-500'
-                                                                        }`}
-                                                                    title="Like this response"
-                                                                >
-                                                                    <ThumbsUp className="h-3.5 w-3.5" />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => handleFeedback(modal._id, idx, 'dislike')}
-                                                                    className={`p-1 rounded hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors ${msg.feedback === 'dislike'
-                                                                        ? 'text-red-600 dark:text-red-400'
-                                                                        : 'text-gray-400 dark:text-gray-500'
-                                                                        }`}
-                                                                    title="Dislike this response"
-                                                                >
-                                                                    <ThumbsDown className="h-3.5 w-3.5" />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => copyResponseToClipboard(msg.content)}
-                                                                    className={`p-1 rounded hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors ${msg.feedback === 'dislike'
-                                                                        ? 'text-red-600 dark:text-red-400'
-                                                                        : 'text-gray-400 dark:text-gray-500'
-                                                                        }`}
-                                                                    title="Copy response"
-                                                                >
-                                                                    <Copy className="h-3.5 w-3.5" />
-                                                                </button>
+                                                            <div className="flex flex-col gap-1 mt-1 ml-2">
+                                                                <div className="flex gap-1">
+                                                                    <button
+                                                                        onClick={() => handleFeedback(modal._id, idx, 'like')}
+                                                                        className={`p-1 rounded hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors ${msg.feedback === 'like'
+                                                                            ? 'text-blue-600 dark:text-blue-400'
+                                                                            : 'text-gray-400 dark:text-gray-500'
+                                                                            }`}
+                                                                        title="Like this response"
+                                                                    >
+                                                                        <ThumbsUp className="h-3.5 w-3.5" />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleFeedback(modal._id, idx, 'dislike')}
+                                                                        className={`p-1 rounded hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors ${msg.feedback === 'dislike'
+                                                                            ? 'text-red-600 dark:text-red-400'
+                                                                            : 'text-gray-400 dark:text-gray-500'
+                                                                            }`}
+                                                                        title="Dislike this response"
+                                                                    >
+                                                                        <ThumbsDown className="h-3.5 w-3.5" />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => copyResponseToClipboard(msg.content)}
+                                                                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors text-gray-400 dark:text-gray-500"
+                                                                        title="Copy response"
+                                                                    >
+                                                                        <Copy className="h-3.5 w-3.5" />
+                                                                    </button>
+                                                                </div>
+                                                                {/* Token usage display */}
+                                                                {msg.tokenUsage && (
+                                                                    <div className="text-[10px] text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                                                                        <span title={`Input: ${msg.tokenUsage.inputTokens} | Output: ${msg.tokenUsage.outputTokens}`}>
+                                                                            🔢 {msg.tokenUsage.totalTokens.toLocaleString()} tokens
+                                                                        </span>
+                                                                        <span title={`$${msg.tokenUsage.estimatedCost.toFixed(6)}`}>
+                                                                            💰 ${msg.tokenUsage.estimatedCost < 0.01
+                                                                                ? msg.tokenUsage.estimatedCost.toFixed(6)
+                                                                                : msg.tokenUsage.estimatedCost.toFixed(4)}
+                                                                        </span>
+                                                                        {msg.tokenUsage.isEstimated && (
+                                                                            <span title="Token count estimated (API didn't provide exact count)" className="text-yellow-600 dark:text-yellow-500">
+                                                                                ≈
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         )}
                                                     </div>
@@ -605,12 +712,50 @@ export default function DashboardPage() {
                 {/* Bottom input bar */}
                 <div className="w-full h-1/6 bg-black p-6 justify-center flex items-center border-t border-gray-300 dark:border-gray-600">
                     <div className="w-full max-w-4xl flex items-center gap-3">
+                        {/* Image Preview - Compact thumbnail */}
+                        {imagePreview && (
+                            <div className="relative flex-shrink-0">
+                                <img
+                                    src={imagePreview}
+                                    alt="Preview"
+                                    className="h-12 w-12 rounded-md border-2 border-blue-500 object-cover"
+                                />
+                                <button
+                                    onClick={removeImage}
+                                    className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 transition-all shadow-lg"
+                                    title="Remove image"
+                                >
+                                    <X className="h-3 w-3" />
+                                </button>
+                            </div>
+                        )}
+
                         {isSaving && (
                             <div className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
                                 <div className="h-2 w-2 bg-blue-500 rounded-full animate-pulse"></div>
                                 Saving...
                             </div>
                         )}
+
+                        {/* Hidden file input */}
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                        />
+
+                        {/* Image upload button */}
+                        <button
+                            onClick={triggerImageUpload}
+                            disabled={isSending || modals.length === 0}
+                            className="p-3 rounded-full bg-gray-700 text-white hover:bg-gray-600 disabled:bg-gray-500 disabled:cursor-not-allowed transition-all"
+                            title="Upload image"
+                        >
+                            <ImagePlus className="h-6 w-6" />
+                        </button>
+
                         <input
                             className="flex-1 py-3 px-6 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             type="text"

@@ -103,3 +103,148 @@ body {
     background: #71717a;
   }
 }
+
+/* Markdown rendering styles */
+.prose {
+  color: inherit;
+}
+
+.prose strong {
+  font-weight: 600;
+  color: inherit;
+}
+
+.prose em {
+  font-style: italic;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  font-weight: 600;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+}
+
+.prose h1 {
+  font-size: 1.5em;
+}
+
+.prose h2 {
+  font-size: 1.3em;
+}
+
+.prose h3 {
+  font-size: 1.1em;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.5em;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose li {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+
+.prose p {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose a {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+.prose code {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+  font-family: monospace;
+}
+
+.prose pre {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 1em;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.prose blockquote {
+  border-left: 3px solid #d1d5db;
+  padding-left: 1em;
+  font-style: italic;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  font-size: 0.9em;
+}
+
+.prose th,
+.prose td {
+  border: 1px solid #d1d5db;
+  padding: 0.5em;
+  text-align: left;
+}
+
+.prose th {
+  background-color: rgba(0, 0, 0, 0.05);
+  font-weight: 600;
+}
+
+.prose hr {
+  border: none;
+  border-top: 1px solid #d1d5db;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+/* Dark mode markdown styles */
+@media (prefers-color-scheme: dark) {
+  .prose code {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .prose pre {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .prose blockquote {
+    border-left-color: #52525b;
+  }
+
+  .prose th,
+  .prose td {
+    border-color: #52525b;
+  }
+
+  .prose th {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .prose hr {
+    border-top-color: #52525b;
+  }
+}

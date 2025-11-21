@@ -37,6 +37,26 @@ interface SideMenuProps {
     onUpdateSessionTitle?: (sessionId: string, newTitle: string) => void;
 }
 
+// Small helper component: Toggle to set all modals active/inactive
+function AllToggleButton({ modals, onBulkUpdate }: { modals: Modal[]; onBulkUpdate: (newStatus: string) => Promise<void> }) {
+    const allActive = modals.length > 0 && modals.every(m => m.status === 'active');
+
+    const handleClick = async () => {
+        const newStatus = allActive ? 'inactive' : 'active';
+        await onBulkUpdate(newStatus);
+    };
+
+    return (
+        <button
+            onClick={handleClick}
+            className={`flex-shrink-0 relative inline-flex h-6 w-12 items-center rounded-full transition-colors ${allActive ? 'bg-green-600' : 'bg-gray-300 dark:bg-zinc-600'}`}
+            title={allActive ? 'Turn all models off' : 'Turn all models on'}
+        >
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${allActive ? 'translate-x-7' : 'translate-x-1'}`} />
+        </button>
+    );
+}
+
 export default function SideMenu({
     onModalUpdate,
     sessions = [],
@@ -95,6 +115,7 @@ export default function SideMenu({
             });
 
             if (res.ok) {
+                // Update local state immediately for responsive UI
                 setModals(
                     modals.map((m) =>
                         m._id === modalId ? { ...m, status: newStatus } : m
@@ -104,9 +125,13 @@ export default function SideMenu({
                 if (onModalUpdate) {
                     onModalUpdate();
                 }
+            } else {
+                console.error("Failed to toggle modal status");
+                alert("Failed to update model status. Please try again.");
             }
         } catch (error) {
             console.error("Error toggling modal status:", error);
+            alert("Error updating model status. Please try again.");
         }
     };
 
@@ -186,12 +211,33 @@ export default function SideMenu({
                             <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
                                 Loading modals...
                             </div>
-                        ) : modals.length > 0 ? (
+                        ) : (
                             <>
-                                <div className="mb-3">
+                                <div className="mb-3 flex items-center justify-between">
                                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                                         AI Models
                                     </h3>
+                                    <AllToggleButton modals={modals} onBulkUpdate={async (newStatus: string) => {
+                                        // Call backend to set all statuses
+                                        try {
+                                            const res = await fetch('/api/modals', {
+                                                method: 'PATCH',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ action: 'setAllStatus', status: newStatus })
+                                            });
+                                            const data = await res.json();
+                                            if (data.success) {
+                                                // Refresh modals list
+                                                fetchModals();
+                                                if (onModalUpdate) onModalUpdate();
+                                            } else {
+                                                alert('Failed to update all models: ' + (data.error || 'unknown'));
+                                            }
+                                        } catch (err) {
+                                            console.error('Bulk update failed', err);
+                                            alert('Bulk update failed');
+                                        }
+                                    }} />
                                 </div>
 
                                 <div className="space-y-2 max-h-80 overflow-y-auto pr-2 sidebar-scroll">
@@ -199,8 +245,8 @@ export default function SideMenu({
                                         <div
                                             key={modal._id}
                                             className={`p-3 rounded-lg border-2 transition-all ${modal.status === "active"
-                                                    ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                                                    : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900"
+                                                ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                                                : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900"
                                                 }`}
                                         >
                                             <div className="flex items-start justify-between gap-2">
@@ -225,8 +271,8 @@ export default function SideMenu({
                                                 <button
                                                     onClick={() => toggleModalStatus(modal._id, modal.status)}
                                                     className={`flex-shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${modal.status === "active"
-                                                            ? "bg-green-600"
-                                                            : "bg-gray-300 dark:bg-zinc-600"
+                                                        ? "bg-green-600"
+                                                        : "bg-gray-300 dark:bg-zinc-600"
                                                         }`}
                                                     title={modal.status === "active" ? "Deactivate" : "Activate"}
                                                 >
@@ -240,10 +286,6 @@ export default function SideMenu({
                                     ))}
                                 </div>
                             </>
-                        ) : (
-                            <div className="text-center py-2 text-gray-500 dark:text-gray-400 text-sm">
-                                No AI models available
-                            </div>
                         )}
                     </div>
 
@@ -277,8 +319,8 @@ export default function SideMenu({
                                         <div
                                             key={sessionId}
                                             className={`group relative p-2 rounded-md cursor-pointer transition-colors ${activeSessionId === sessionId
-                                                    ? "bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700"
-                                                    : "hover:bg-gray-100 dark:hover:bg-zinc-700"
+                                                ? "bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700"
+                                                : "hover:bg-gray-100 dark:hover:bg-zinc-700"
                                                 }`}
                                         >
                                             {editingSessionId === sessionId ? (

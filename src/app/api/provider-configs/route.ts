@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
                 provider,
                 api_key,
                 credit: credit || 0,
+                totalTokensUsed: 0,
                 createdAt: new Date(),
                 updatedAt: new Date(),
             };
@@ -112,6 +113,49 @@ export async function DELETE(request: NextRequest) {
         console.error('Error deleting provider config:', error);
         return NextResponse.json(
             { success: false, error: 'Failed to delete provider config' },
+            { status: 500 }
+        );
+    }
+}
+
+// PATCH - Update provider credit or other fields
+export async function PATCH(request: NextRequest) {
+    try {
+        const body = await request.json();
+        const { provider, credit, ...updates } = body;
+
+        if (!provider) {
+            return NextResponse.json(
+                { success: false, error: 'Provider name is required' },
+                { status: 400 }
+            );
+        }
+
+        const { db } = await connectToDatabase();
+
+        const updateFields: any = { ...updates, updatedAt: new Date() };
+        if (credit !== undefined) {
+            updateFields.credit = credit;
+        }
+
+        const result = await db.collection<ProviderConfig>(ProviderConfigCollection)
+            .updateOne(
+                { provider: provider as any },
+                { $set: updateFields }
+            );
+
+        if (result.matchedCount === 0) {
+            return NextResponse.json(
+                { success: false, error: 'Provider config not found' },
+                { status: 404 }
+            );
+        }
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error('Error updating provider config:', error);
+        return NextResponse.json(
+            { success: false, error: 'Failed to update provider config' },
             { status: 500 }
         );
     }

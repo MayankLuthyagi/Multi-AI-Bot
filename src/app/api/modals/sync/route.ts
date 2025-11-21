@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/src/lib/db';
-import { Modal, ModalCollection, PROVIDER_TEMPLATES } from '@/src/lib/models/Modal';
+import { Modal, ModalCollection, PROVIDER_TEMPLATES, ProviderConfigCollection } from '@/src/lib/models/Modal';
 
 // POST - Sync models for a provider (delete old, add new from template)
 export async function POST(request: NextRequest) {
@@ -40,8 +40,97 @@ export async function POST(request: NextRequest) {
         // Delete all existing models for this provider
         await db.collection<Modal>(ModalCollection).deleteMany({ provider });
 
-        // Create new models from template
-        const newModals = providerTemplate.availableModels.map(model => {
+        // Attempt to fetch live model list from provider API if we have provider credentials.
+        let sourceModels: { id: string; name: string; costPer1KTokens?: number }[] = providerTemplate.availableModels;
+        try {
+            const providerConfig = await db.collection(ProviderConfigCollection).findOne({ provider });
+            if (providerConfig && providerConfig.api_key) {
+                const apiKey = providerConfig.api_key as string;
+                let url = '';
+                const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+
+                if (provider === 'Google') {
+                    // Google Generative Language models endpoint (use key query param)
+                    url = `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`;
+                } else if (provider === 'OpenAI') {
+                    url = 'https://api.openai.com/v1/models';
+                    headers['Authorization'] = `Bearer ${apiKey}`;
+                } else if (provider === 'Anthropic') {
+                    url = 'https://api.anthropic.com/v1/models';
+                    headers['x-api-key'] = apiKey;
+                    // include version if template provided one
+                    if (providerTemplate.headerTemplate && providerTemplate.headerTemplate['anthropic-version']) {
+                        headers['anthropic-version'] = providerTemplate.headerTemplate['anthropic-version'];
+                    }
+                }
+
+                if (url) {
+                    const resp = await fetch(url, { headers });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        let modelsArr: any[] = [];
+
+                        // Try common response shapes: OpenAI -> { data: [...] }, Anthropic -> { models: [...] }, Google -> { models: [...] }
+                        if (Array.isArray(data.data)) modelsArr = data.data;
+                        else if (Array.isArray(data.models)) modelsArr = data.models;
+                        else if (Array.isArray(data)) modelsArr = data;
+
+                        if (modelsArr.length > 0) {
+                            // Map remote models to the internal shape, keep cost if available from template
+                            const templateCosts = new Map(providerTemplate.availableModels.map(m => [m.id, { input: m.inputPricePerMillion, output: m.outputPricePerMillion }]));
+                            sourceModels = modelsArr.map(m => {
+                                // Different providers may use different key names
+                                const id = m.id || m.name || m.model || m.modelId || m.nameId || m.model_id;
+                                const name = m.name || m.display_name || m.id || id;
+                                const costs = templateCosts.get(id) || { input: 0, output: 0 };
+                                return { id: String(id), name: String(name), inputPricePerMillion: costs.input, outputPricePerMillion: costs.output };
+                            }).filter(x => x.id);
+
+                            // Whitelist: only keep the models the user requested per provider
+                            const ALLOWED_MODELS: Record<string, string[]> = {
+                                'OpenAI': [
+                                    'gpt-5.1-chat-latest', 'gpt-4.1', 'gpt-4o-mini',
+                                    // search models
+                                    'gpt-5-search-api', 'gpt-4o-search-preview', 'gpt-4o-mini-search-preview'
+                                ],
+                                'Anthropic': [
+                                    'claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251001'
+                                ],
+                                'Google': [
+                                    'models/gemini-2.5-pro', 'models/gemini-2.5-flash',
+                                    // gemini search variants
+                                    'models/gemini-2.0-flash-thinking-exp', 'models/gemini-2.0-flash-thinking-exp-01-21', 'models/gemini-exp-1206'
+                                ],
+                                'DeepSeek': [
+                                    'deepseek-chat', 'deepseek-reasoner'
+                                ],
+                                'Perplexity AI': [
+                                    'llama-3.1-sonar-large-128k-online', 'llama-3.1-sonar-small-128k-online', 'llama-3.1-sonar-huge-128k-online'
+                                ]
+                            };
+
+                            const allowed = ALLOWED_MODELS[provider];
+                            if (allowed && allowed.length > 0) {
+                                const allowedSet = new Set(allowed.map(s => s.toLowerCase()));
+                                // Normalize IDs and keep only allowed ones. Some providers prefix model ids with 'models/'.
+                                sourceModels = sourceModels.filter(m => {
+                                    const id = String(m.id).toLowerCase();
+                                    const idNoPrefix = id.startsWith('models/') ? id : id;
+                                    return allowedSet.has(id) || allowedSet.has(idNoPrefix);
+                                });
+                            }
+                        }
+                    } else {
+                        console.warn('Failed to fetch provider models, falling back to template:', provider, await resp.text());
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('Error fetching remote models for provider:', provider, err);
+        }
+
+        // Create new models from sourceModels (live models if fetched, otherwise template)
+        const newModals = sourceModels.map(model => {
             const status = activeModelIds.has(model.id) ? 'active' : 'inactive';
             return {
                 name: model.name,
@@ -52,13 +141,19 @@ export async function POST(request: NextRequest) {
                 headers: providerTemplate.headerTemplate,
                 responsePath: providerTemplate.defaultResponsePath,
                 status: status as 'active' | 'inactive',
-                costPer1KTokens: model.costPer1KTokens,
+                inputPricePerMillion: model.inputPricePerMillion || 0,
+                outputPricePerMillion: model.outputPricePerMillion || 0,
+                inputTokensUsed: 0,
+                outputTokensUsed: 0,
+                totalCost: 0,
                 createdAt: new Date(),
                 updatedAt: new Date(),
             };
         });
 
-        await db.collection<Modal>(ModalCollection).insertMany(newModals);
+        if (newModals.length > 0) {
+            await db.collection<Modal>(ModalCollection).insertMany(newModals);
+        }
 
         return NextResponse.json({
             success: true,

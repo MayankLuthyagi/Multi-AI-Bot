@@ -6,8 +6,7 @@ export type ProviderName =
     | 'Google'
     | 'DeepSeek'
     | 'Perplexity AI'
-    | 'xAI'
-    | 'Mistral AI';
+    | 'xAI';
 
 export type RequestType = 'chat' | 'completion' | 'json' | 'image';
 
@@ -17,6 +16,7 @@ export interface ProviderConfig {
     provider: ProviderName;
     api_key: string;
     credit: number;
+    totalTokensUsed: number; // Total tokens used across all models
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -26,13 +26,17 @@ export interface Modal {
     _id?: ObjectId;
     name: string;
     provider: ProviderName;
-    modelId: string; // e.g., gpt-4-turbo, claude-3-5-sonnet
+    modelId: string; // e.g., gpt-4-turbo, claude-sonnet-4-5
     apiEndpoint: string;
     requestType: RequestType;
     headers?: Record<string, string>; // Custom headers
     responsePath?: string; // e.g., choices[0].message.content
     status: 'active' | 'inactive';
-    costPer1KTokens: number;
+    inputPricePerMillion: number;  // Price per 1M input tokens
+    outputPricePerMillion: number; // Price per 1M output tokens
+    inputTokensUsed: number; // Total input tokens used by this model
+    outputTokensUsed: number; // Total output tokens used by this model
+    totalCost: number; // Total cost incurred by this model
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -47,7 +51,8 @@ export interface ProviderTemplate {
     availableModels: {
         id: string;
         name: string;
-        costPer1KTokens: number;
+        inputPricePerMillion: number;
+        outputPricePerMillion: number;
     }[];
     requiresAuth: boolean;
     headerTemplate: Record<string, string>;
@@ -60,11 +65,12 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
         defaultRequestType: 'chat',
         defaultResponsePath: 'choices[0].message.content',
         availableModels: [
-            { id: 'gpt-5', name: 'GPT-5', costPer1KTokens: 0.02 },
-            { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', costPer1KTokens: 0.01 },
-            { id: 'gpt-4', name: 'GPT-4', costPer1KTokens: 0.03 },
-            { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', costPer1KTokens: 0.001 },
-            { id: 'gpt-4o', name: 'GPT-4o', costPer1KTokens: 0.005 },
+            { id: 'gpt-5.1-chat-latest', name: 'GPT-5.1 Chat', inputPricePerMillion: 3.00, outputPricePerMillion: 15.00 },
+            { id: 'gpt-4.1', name: 'GPT-4.1', inputPricePerMillion: 10.00, outputPricePerMillion: 30.00 },
+            { id: 'gpt-4o-mini', name: 'GPT-4o Mini', inputPricePerMillion: 0.15, outputPricePerMillion: 0.60 },
+            { id: 'gpt-5-search-api', name: 'GPT-5 Search API', inputPricePerMillion: 5.00, outputPricePerMillion: 20.00 },
+            { id: 'gpt-4o-search-preview', name: 'GPT-4o Search Preview', inputPricePerMillion: 2.50, outputPricePerMillion: 10.00 },
+            { id: 'gpt-4o-mini-search-preview', name: 'GPT-4o Mini Search', inputPricePerMillion: 0.30, outputPricePerMillion: 1.20 },
         ],
         requiresAuth: true,
         headerTemplate: {
@@ -78,10 +84,8 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
         defaultRequestType: 'chat',
         defaultResponsePath: 'content[0].text',
         availableModels: [
-            { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', costPer1KTokens: 0.003 },
-            { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', costPer1KTokens: 0.015 },
-            { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet', costPer1KTokens: 0.003 },
-            { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku', costPer1KTokens: 0.00025 },
+            { id: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5', inputPricePerMillion: 3.00, outputPricePerMillion: 15.00 },
+            { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', inputPricePerMillion: 0.80, outputPricePerMillion: 4.00 },
         ],
         requiresAuth: true,
         headerTemplate: {
@@ -96,9 +100,11 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
         defaultRequestType: 'chat',
         defaultResponsePath: 'candidates[0].content.parts[0].text',
         availableModels: [
-            { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', costPer1KTokens: 0.00125 },
-            { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', costPer1KTokens: 0.000075 },
-            { id: 'gemini-pro', name: 'Gemini Pro', costPer1KTokens: 0.0005 },
+            { id: 'models/gemini-2.5-pro', name: 'Gemini 2.5 Pro', inputPricePerMillion: 1.25, outputPricePerMillion: 5.00 },
+            { id: 'models/gemini-2.5-flash', name: 'Gemini 2.5 Flash', inputPricePerMillion: 0.075, outputPricePerMillion: 0.30 },
+            { id: 'models/gemini-2.0-flash-thinking-exp', name: 'Gemini 2.0 Flash Thinking', inputPricePerMillion: 0.00, outputPricePerMillion: 0.00 },
+            { id: 'models/gemini-2.0-flash-thinking-exp-01-21', name: 'Gemini 2.0 Flash Thinking 01-21', inputPricePerMillion: 0.00, outputPricePerMillion: 0.00 },
+            { id: 'models/gemini-exp-1206', name: 'Gemini Exp 1206', inputPricePerMillion: 0.00, outputPricePerMillion: 0.00 },
         ],
         requiresAuth: true,
         headerTemplate: {
@@ -111,8 +117,8 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
         defaultRequestType: 'chat',
         defaultResponsePath: 'choices[0].message.content',
         availableModels: [
-            { id: 'deepseek-chat', name: 'DeepSeek Chat', costPer1KTokens: 0.00014 },
-            { id: 'deepseek-coder', name: 'DeepSeek Coder', costPer1KTokens: 0.00014 },
+            { id: 'deepseek-chat', name: 'DeepSeek Chat', inputPricePerMillion: 0.14, outputPricePerMillion: 0.28 },
+            { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner', inputPricePerMillion: 0.55, outputPricePerMillion: 2.19 },
         ],
         requiresAuth: true,
         headerTemplate: {
@@ -126,8 +132,9 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
         defaultRequestType: 'chat',
         defaultResponsePath: 'choices[0].message.content',
         availableModels: [
-            { id: 'sonar', name: 'Sonar (Lightweight)', costPer1KTokens: 0.0002 },
-            { id: 'sonar-pro', name: 'Sonar Pro (Advanced)', costPer1KTokens: 0.001 },
+            { id: 'llama-3.1-sonar-large-128k-online', name: 'Sonar Large Online', inputPricePerMillion: 1.00, outputPricePerMillion: 1.00 },
+            { id: 'llama-3.1-sonar-small-128k-online', name: 'Sonar Small Online', inputPricePerMillion: 0.20, outputPricePerMillion: 0.20 },
+            { id: 'llama-3.1-sonar-huge-128k-online', name: 'Sonar Huge Online', inputPricePerMillion: 5.00, outputPricePerMillion: 5.00 },
         ],
         requiresAuth: true,
         headerTemplate: {
@@ -141,8 +148,8 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
         defaultRequestType: 'chat',
         defaultResponsePath: 'choices[0].message.content',
         availableModels: [
-            { id: 'grok-beta', name: 'Grok Beta', costPer1KTokens: 0.005 },
-            { id: 'grok-vision-beta', name: 'Grok Vision Beta', costPer1KTokens: 0.005 },
+            { id: 'grok-beta', name: 'Grok Beta', inputPricePerMillion: 5.00, outputPricePerMillion: 15.00 },
+            { id: 'grok-vision-beta', name: 'Grok Vision Beta', inputPricePerMillion: 5.00, outputPricePerMillion: 15.00 },
         ],
         requiresAuth: true,
         headerTemplate: {
@@ -150,22 +157,6 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
             'Authorization': 'Bearer {{API_KEY}}'
         }
     },
-    {
-        name: 'Mistral AI',
-        defaultEndpoint: 'https://api.mistral.ai/v1/chat/completions',
-        defaultRequestType: 'chat',
-        defaultResponsePath: 'choices[0].message.content',
-        availableModels: [
-            { id: 'mistral-large-latest', name: 'Mistral Large', costPer1KTokens: 0.004 },
-            { id: 'mistral-medium-latest', name: 'Mistral Medium', costPer1KTokens: 0.0027 },
-            { id: 'mistral-small-latest', name: 'Mistral Small', costPer1KTokens: 0.001 },
-            { id: 'open-mistral-7b', name: 'Open Mistral 7B', costPer1KTokens: 0.00025 },
-        ],
-        requiresAuth: true,
-        headerTemplate: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer {{API_KEY}}'
-        }
-    }
+
 ];
 
