@@ -529,14 +529,40 @@ export default function DashboardPage() {
 
     // toggleModalStatus, navigateToProfile, and handleLogout have been REMOVED
 
+    // Get provider logo based on provider name
+    const getProviderLogo = (provider: string) => {
+        const providerLower = provider.toLowerCase();
+        const logoMap: { [key: string]: string } = {
+            'openai': '/logo/openai.png',
+            'anthropic': '/logo/anthropic.png',
+            'google': '/logo/google.png',
+            'deepseek': '/logo/deepseek.png',
+            'perplexity ai': '/logo/perplexityai.png',
+        };
+        return logoMap[providerLower] || null;
+    };
+
     return (
         <div className="flex h-screen justify-center bg-gray-100 dark:bg-zinc-900 font-sans">
-            <div className="w-full items-start">
+            <div className="w-full items-start relative">
+                {/* Floating Hamburger Menu - Top Right */}
+                <div className="absolute top-2 right-2 z-30">
+                    <SideMenu
+                        onModalUpdate={handleModalUpdate}
+                        sessions={sessions}
+                        activeSessionId={activeSessionId}
+                        onCreateSession={createNewSession}
+                        onSwitchSession={switchSession}
+                        onDeleteSession={deleteSession}
+                        onUpdateSessionTitle={updateSessionTitle}
+                    />
+                </div>
+
                 <div className="w-full h-5/6 flex flex-row">
 
                     {/* Scrollable chat section */}
                     <div
-                        className="flex-1 h-full bg-black flex space-x-1 border-b border-gray-300 dark:border-gray-600 overflow-x-auto horizontal-scrollbar"
+                        className="w-full h-full bg-black flex space-x-1 border-b border-gray-300 dark:border-gray-600 overflow-x-auto horizontal-scrollbar"
                     >
                         {loading ? (
                             <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -563,14 +589,19 @@ export default function DashboardPage() {
                                         {/* Modal Header */}
                                         <div className="p-3 border-b border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900">
                                             <div className="flex items-center gap-2">
-                                                <Bot className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                                {getProviderLogo(modal.provider) ? (
+                                                    <img
+                                                        src={getProviderLogo(modal.provider)!}
+                                                        alt={modal.provider}
+                                                        className="h-6 w-6 object-contain rounded"
+                                                    />
+                                                ) : (
+                                                    <Bot className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                                )}
                                                 <div className="flex-1">
                                                     <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100">
                                                         {modal.name}
                                                     </h3>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                        {modal.provider} • In: ${(modal.inputPricePerMillion ?? 0).toFixed(2)}/1M • Out: ${(modal.outputPricePerMillion ?? 0).toFixed(2)}/1M
-                                                    </p>
                                                 </div>
                                                 <span className="h-2 w-2 rounded-full bg-green-500"></span>
                                             </div>
@@ -691,34 +722,18 @@ export default function DashboardPage() {
                         )}
                     </div>
 
-                    {/* Menu Button Area */}
-                    <div className="w-16 h-full p-2 bg-white dark:bg-zinc-800 border-b border-l border-gray-300 dark:border-gray-600 flex items-start justify-center">
-                        {/* All the hamburger button, side drawer, and overlay logic
-                          is now handled by this single component.
-                        */}
-                        <SideMenu
-                            onModalUpdate={handleModalUpdate}
-                            sessions={sessions}
-                            activeSessionId={activeSessionId}
-                            onCreateSession={createNewSession}
-                            onSwitchSession={switchSession}
-                            onDeleteSession={deleteSession}
-                            onUpdateSessionTitle={updateSessionTitle}
-                        />
-                    </div>
-
                 </div>
 
                 {/* Bottom input bar */}
-                <div className="w-full h-1/6 bg-black p-6 justify-center flex items-center border-t border-gray-300 dark:border-gray-600">
-                    <div className="w-full max-w-4xl flex items-center gap-3">
+                <div className="w-full h-1/6 bg-black p-3 sm:p-4 md:p-6 justify-center flex items-center border-t border-gray-300 dark:border-gray-600">
+                    <div className="w-full max-w-4xl flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3">
                         {/* Image Preview - Compact thumbnail */}
                         {imagePreview && (
                             <div className="relative flex-shrink-0">
                                 <img
                                     src={imagePreview}
                                     alt="Preview"
-                                    className="h-12 w-12 rounded-md border-2 border-blue-500 object-cover"
+                                    className="h-10 w-10 sm:h-12 sm:w-12 rounded-md border-2 border-blue-500 object-cover"
                                 />
                                 <button
                                     onClick={removeImage}
@@ -731,7 +746,7 @@ export default function DashboardPage() {
                         )}
 
                         {isSaving && (
-                            <div className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                            <div className="hidden sm:flex text-xs text-gray-400 dark:text-gray-500 items-center gap-1">
                                 <div className="h-2 w-2 bg-blue-500 rounded-full animate-pulse"></div>
                                 Saving...
                             </div>
@@ -750,18 +765,18 @@ export default function DashboardPage() {
                         <button
                             onClick={triggerImageUpload}
                             disabled={isSending || modals.length === 0}
-                            className="p-3 rounded-full bg-gray-700 text-white hover:bg-gray-600 disabled:bg-gray-500 disabled:cursor-not-allowed transition-all"
+                            className="p-2 sm:p-3 rounded-full bg-gray-700 text-white hover:bg-gray-600 disabled:bg-gray-500 disabled:cursor-not-allowed transition-all flex-shrink-0"
                             title="Upload image"
                         >
-                            <ImagePlus className="h-6 w-6" />
+                            <ImagePlus className="h-5 w-5 sm:h-6 sm:w-6" />
                         </button>
 
                         <input
-                            className="flex-1 py-3 px-6 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="flex-1 min-w-0 py-2 px-4 sm:py-3 sm:px-6 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
                             type="text"
                             placeholder={
                                 modals.length > 0
-                                    ? `Send to ${modals.length} active AI modal${modals.length > 1 ? "s" : ""}...`
+                                    ? `Send to ${modals.length} AI modal${modals.length > 1 ? "s" : ""}...`
                                     : "No active modals..."
                             }
                             value={inputValue}
@@ -772,12 +787,12 @@ export default function DashboardPage() {
                         <button
                             onClick={sendToAllModals}
                             disabled={isSending || !inputValue.trim() || modals.length === 0}
-                            className="p-3 rounded-full bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all"
+                            className="p-2 sm:p-3 rounded-full bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all flex-shrink-0"
                         >
                             {isSending ? (
-                                <Loader2 className="h-6 w-6 animate-spin" />
+                                <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
                             ) : (
-                                <Send className="h-6 w-6" />
+                                <Send className="h-5 w-5 sm:h-6 sm:w-6" />
                             )}
                         </button>
                     </div>
