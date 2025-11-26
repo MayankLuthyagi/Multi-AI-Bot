@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Pie } from 'react-chartjs-2';
-
+import LoginModal from "../components/LoginModal";
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 interface ModelStats {
@@ -45,7 +45,7 @@ export default function ProviderStats() {
     const [error, setError] = useState<string | null>(null);
     const [recalculating, setRecalculating] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
-
+    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     useEffect(() => {
         setIsMounted(true);
         fetchStats();
@@ -177,7 +177,7 @@ export default function ProviderStats() {
         // --- START: ORIGINAL PIE COLORS (NOT CHANGED) ---
         const modelColors = [
             "rgba(0,0,0,0.85)",
-            "rgba(60,60,60,0.85)",
+            "rgba(40, 39, 39, 0.85)",
             "rgba(120,120,120,0.85)",
             "rgba(180,180,180,0.85)",
             "rgba(220,220,220,0.85)",
@@ -189,7 +189,7 @@ export default function ProviderStats() {
         ];
         const borderColors = [
             "rgba(0,0,0,1)",
-            "rgba(60,60,60,1)",
+            "rgba(40, 39, 39, 0.85)",
             "rgba(120,120,120,1)",
             "rgba(180,180,180,1)",
             "rgba(220,220,220,1)",
@@ -385,38 +385,42 @@ export default function ProviderStats() {
     }
 
     const pieData = getPieChartData();
-
     return (
         <div className="space-y-6">
-            {/* Overall Statistics */}
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-8 border border-gray-700 shadow-2xl">
-                <h3 className="text-2xl font-bold text-white mb-6 tracking-tight">Overall Statistics</h3>
+                        {/* Login Modal */}
+            <LoginModal
+                isOpen={isLoginModalOpen}
+                onClose={() => setIsLoginModalOpen(false)}
+            />
+
+            {/* Overall Statistics #131111 */}
+            <div className="bg-[#38343a] rounded-xl p-8 border border-gray-700 shadow-2xl">
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-                    <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                    <div className="bg-[#131111] rounded-lg p-4 border border-gray-700">
                         <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Total Tokens</p>
                         <p className="text-2xl font-bold text-white">
                             {formatNumber(stats.overall.totalTokens)}
                         </p>
                     </div>
-                    <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                    <div className="bg-[#131111] rounded-lg p-4 border border-gray-700">
                         <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Total Spent</p>
                         <p className="text-2xl font-bold text-gray-300">
                             {formatCurrency(stats.overall.totalCost)}
                         </p>
                     </div>
-                    <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                    <div className="bg-[#131111] rounded-lg p-4 border border-gray-700">
                         <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Initial Credit</p>
                         <p className="text-2xl font-bold text-white">
                             {formatCurrency(calculateTotalInitialCredit())}
                         </p>
                     </div>
-                    <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                    <div className="bg-[#131111] rounded-lg p-4 border border-gray-700">
                         <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Credit Left</p>
                         <p className="text-2xl font-bold text-gray-200">
                             {formatCurrency(calculateTotalCredit())}
                         </p>
                     </div>
-                    <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                    <div className="bg-[#131111] rounded-lg p-4 border border-gray-700">
                         <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Total Models</p>
                         <p className="text-2xl font-bold text-white">
                             {stats.overall.totalModels}
@@ -428,10 +432,6 @@ export default function ProviderStats() {
 
             {/* Provider-wise Statistics with Pie Charts */}
             <div >
-
-                <div className="flex justify-center text-center">
-                    <h3 className="text-2xl font-bold text-white mb-6 tracking-tight">Provider Statistics</h3>
-                </div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {stats.byProvider.map((provider) => {
                         const remainingCredit = calculateRemainingCredit(provider);
@@ -447,7 +447,7 @@ export default function ProviderStats() {
                         return (
                             <div
                                 key={provider.provider}
-                                className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-xl p-6 border border-gray-700 hover:border-gray-600 transition-all duration-300"
+                                className="bg-[#38343a] rounded-xl shadow-xl p-6 border border-gray-700 hover:border-gray-600 transition-all duration-300"
                             >
                                 {/* Provider Header */}
                                 <div className="flex items-center justify-center mb-6">
@@ -465,7 +465,7 @@ export default function ProviderStats() {
 
 
                                 {/* Credit Progress Bar */}
-                                <div className="mb-4 bg-gray-800/30 rounded-lg p-4 border border-gray-700/50">
+                                <div className="mb-4 bg-[#131111] rounded-lg p-4 border border-gray-700/50">
                                     <div className="flex justify-between text-xs font-medium text-gray-300 mb-2">
                                         <span className="uppercase tracking-wider">Credit Usage</span>
                                         <span className="text-gray-400">
@@ -491,11 +491,15 @@ export default function ProviderStats() {
             </div>
 
             {/* Refresh Button */}
-            <div className="text-center space-x-4">
+            <div className="flex justify-center items-center gap-4 mt-8">
+
                 <button
                     onClick={recalculateCosts}
                     disabled={recalculating}
-                    className="px-8 py-3 bg-gradient-to-r from-gray-700 to-gray-800 text-white font-medium rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all duration-300 inline-flex items-center gap-3 disabled:opacity-50 cursor-pointer shadow-lg border border-gray-600 hover:shadow-xl"
+                    className="h-12 px-8 bg-[#131111] text-white font-medium rounded-lg 
+                            transition-all duration-300 shadow-lg border border-gray-600 
+                            hover:shadow-xl hover:bg-[#1b191d] flex items-center gap-3
+                            disabled:opacity-50 cursor-pointer justify-center"
                 >
                     {recalculating ? (
                         <>
@@ -505,11 +509,36 @@ export default function ProviderStats() {
                     ) : (
                         <>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                    d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                                />
                             </svg>
-                            <span>Recalculate Costs</span>
+                            <span>Recalculate</span>
                         </>
                     )}
+                </button>
+                <button
+                    onClick={() => setIsLoginModalOpen(true)}
+                    className="h-12 px-8 bg-[#131111] text-white font-medium rounded-lg 
+                            transition-all duration-300 shadow-lg border border-gray-600 
+                            hover:shadow-xl hover:bg-[#1b191d] flex items-center justify-center gap-3 cursor-pointer"
+                >
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-5 h-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M12 11c.828 0 1.5.672 1.5 1.5v3a1.5 1.5 0 01-3 0v-3c0-.828.672-1.5 1.5-1.5zm6-2V7a6 6 0 10-12 0v2m12 0H6a2 2 0 00-2 2v7a2 2 0 002 2h12a2 2 0 002-2v-7a2 2 0 00-2-2z"
+                        />
+                    </svg>
+
+                    <span>Login</span>
                 </button>
             </div>
         </div>
