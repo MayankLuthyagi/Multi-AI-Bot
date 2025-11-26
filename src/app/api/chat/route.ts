@@ -130,7 +130,7 @@ function buildRequestBody(provider: string, modelId: string, message: string, co
                                     mime_type: mimeType,
                                     data: base64Data
                                 }
-                            }
+                            } as any
                         ]
                     });
                 }
@@ -277,7 +277,7 @@ export async function POST(request: NextRequest) {
                 // Build full conversation context for accurate estimation
                 let fullInputText = message;
                 if (conversationHistory && conversationHistory.length > 0) {
-                    fullInputText = conversationHistory.map(msg => msg.content).join('\n') + '\n' + message;
+                    fullInputText = conversationHistory.map((msg: { role: string, content: string }) => msg.content).join('\n') + '\n' + message;
                 }
 
                 const tokenEstimates = calculateConversationTokens(fullInputText, aiResponse, []);
@@ -290,8 +290,6 @@ export async function POST(request: NextRequest) {
             // Update modal token usage and cost in database
             try {
                 const { db } = await connectToDatabase();
-                const { Modal: ModalModel, ModalCollection } = await import('@/src/lib/models/Modal');
-                const { ProviderConfig, ProviderConfigCollection } = await import('@/src/lib/models/Modal');
                 const { TokenUsageLogCollection } = await import('@/src/lib/models/TokenUsage');
 
                 // Get the modal to calculate cost

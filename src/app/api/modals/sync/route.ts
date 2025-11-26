@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         await db.collection<Modal>(ModalCollection).deleteMany({ provider });
 
         // Attempt to fetch live model list from provider API if we have provider credentials.
-        let sourceModels: { id: string; name: string; costPer1KTokens?: number }[] = providerTemplate.availableModels;
+        let sourceModels: { id: string; name: string; inputPricePerMillion: number; outputPricePerMillion: number }[] = providerTemplate.availableModels;
         try {
             const providerConfig = await db.collection(ProviderConfigCollection).findOne({ provider });
             if (providerConfig && providerConfig.api_key) {
