@@ -26,15 +26,17 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             const res = await fetch("/api/auth", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
+                credentials: "include", // Important for cookies
                 body: JSON.stringify({ name, email, password }),
             });
 
-            if (res.ok) {
+            const data = await res.json().catch(() => null);
+
+            if (res.ok && data?.success) {
                 window.location.href = "/dashboard";
                 return;
             }
 
-            const data = await res.json().catch(() => null);
             setError(data?.error || "Invalid credentials");
         } catch (err) {
             setError("Network error");
@@ -85,8 +87,8 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                         >
                             {loading ? "Signing in..." : "Sign in"}
                         </button>
-                        
-                        <button 
+
+                        <button
                             onClick={onClose}
                             className="w-full py-2 bg-gray-200 dark:bg-zinc-700 rounded-lg text-gray-900 dark:text-gray-100 cursor-pointer"
                         >

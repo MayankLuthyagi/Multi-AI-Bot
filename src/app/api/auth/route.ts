@@ -23,10 +23,13 @@ export async function login(name: string, email: string, password: string, reque
     // Create session
     await createSession(user._id.toString(), user.email);
 
-    // Next.js requires absolute URLs for redirects in some runtimes (middleware/edge).
-    // Build an absolute URL from the incoming request URL when available.
-    const redirectUrl = new URL('/dashboard', requestUrl || 'http://localhost:3000');
-    return NextResponse.redirect(redirectUrl);
+    // Return JSON success response instead of redirect
+    // Let the client handle the redirect
+    return NextResponse.json({
+        success: true,
+        message: "Login successful",
+        redirectTo: '/dashboard'
+    }, { status: 200 });
 }
 
 // HTTP POST handler so clients can POST JSON to /api/auth
