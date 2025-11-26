@@ -398,31 +398,31 @@ export default function ProviderStats() {
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
                     <div className="bg-[#131111] rounded-lg p-4 border border-gray-700">
                         <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Total Tokens</p>
-                        <p className="text-2xl font-bold text-white">
+                        <p className="sm:text-md lg:text-2xl font-bold text-white">
                             {formatNumber(stats.overall.totalTokens)}
                         </p>
                     </div>
                     <div className="bg-[#131111] rounded-lg p-4 border border-gray-700">
                         <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Total Spent</p>
-                        <p className="text-2xl font-bold text-gray-300">
+                        <p className="sm:text-md lg:text-2xl font-bold text-gray-300">
                             {formatCurrency(stats.overall.totalCost)}
                         </p>
                     </div>
                     <div className="bg-[#131111] rounded-lg p-4 border border-gray-700">
                         <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Initial Credit</p>
-                        <p className="text-2xl font-bold text-white">
+                        <p className="sm:text-md lg:text-2xl font-bold text-white">
                             {formatCurrency(calculateTotalInitialCredit())}
                         </p>
                     </div>
                     <div className="bg-[#131111] rounded-lg p-4 border border-gray-700">
                         <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Credit Left</p>
-                        <p className="text-2xl font-bold text-gray-200">
+                        <p className="sm:text-md lg:text-2xl font-bold text-gray-200">
                             {formatCurrency(calculateTotalCredit())}
                         </p>
                     </div>
                     <div className="bg-[#131111] rounded-lg p-4 border border-gray-700">
                         <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Total Models</p>
-                        <p className="text-2xl font-bold text-white">
+                        <p className="sm:text-md lg:text-2xl font-bold text-white">
                             {stats.overall.totalModels}
                         </p>
                     </div>
@@ -496,7 +496,7 @@ export default function ProviderStats() {
                 <button
                     onClick={recalculateCosts}
                     disabled={recalculating}
-                    className="h-12 px-8 bg-[#131111] text-white font-medium rounded-lg 
+                    className="h-10 px-4 sm:h-12 sm:px-8 bg-[#131111] text-white font-medium rounded-lg 
                             transition-all duration-300 shadow-lg border border-gray-600 
                             hover:shadow-xl hover:bg-[#1b191d] flex items-center gap-3
                             disabled:opacity-50 cursor-pointer justify-center"
@@ -519,7 +519,7 @@ export default function ProviderStats() {
                 </button>
                 <button
                     onClick={() => setIsLoginModalOpen(true)}
-                    className="h-12 px-8 bg-[#131111] text-white font-medium rounded-lg 
+                    className="h-10 px-4 sm:h-12 sm:px-8 bg-[#131111] text-white font-medium rounded-lg 
                             transition-all duration-300 shadow-lg border border-gray-600 
                             hover:shadow-xl hover:bg-[#1b191d] flex items-center justify-center gap-3 cursor-pointer"
                 >
