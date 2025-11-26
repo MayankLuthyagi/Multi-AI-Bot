@@ -20,7 +20,7 @@ function getNestedValue(obj: any, path: string): string {
 }
 
 // Build request body based on provider
-function buildRequestBody(provider: string, modelId: string, message: string, conversationHistory?: Array<{ role: string, content: string }>, image?: string): any {
+function buildRequestBody(provider: string, modelId: string, message: string, conversationHistory?: Array<{ role: string, content: string }>, image?: string, webSearchEnabled?: boolean): any {
     const baseParams = {
         temperature: 0.7,
         max_tokens: 1000,
@@ -57,11 +57,34 @@ function buildRequestBody(provider: string, modelId: string, message: string, co
         case 'DeepSeek':
         case 'xAI':
         case 'Perplexity AI':
-            return {
+            const openaiBody: any = {
                 model: modelId,
                 messages: messages,
                 ...baseParams,
             };
+
+            if (provider === 'OpenAI' && webSearchEnabled) {
+                // Convert modelId → with-search model
+                if (!modelId.includes('-with-search')) {
+                    openaiBody.model = `${modelId}-with-search`;
+                }
+            }
+
+            return openaiBody;
+
+        case 'Zhipu AI':
+            const zhipuBody: any = {
+                model: modelId,
+                messages: messages,
+                ...baseParams,
+            };
+
+            // Add web search for Zhipu AI if enabled
+            if (webSearchEnabled) {
+                zhipuBody.tools = [{ type: 'web_search' }];
+            }
+
+            return zhipuBody;
 
         case 'Anthropic':
             // Anthropic vision format
@@ -138,13 +161,24 @@ function buildRequestBody(provider: string, modelId: string, message: string, co
                 contents.push({ role: 'user', parts: [{ text: message }] });
             }
 
-            return {
+            const googleBody: any = {
                 contents: contents,
                 generationConfig: {
                     temperature: 0.7,
                     maxOutputTokens: 1000,
                 }
             };
+
+            // Add web search for Google if enabled
+            if (webSearchEnabled) {
+                googleBody.tools = [{ google_search: {} }];
+                googleBody.generationConfig = {
+                    ...googleBody.generationConfig,
+                    enable_grounding: true,
+                };
+            }
+
+            return googleBody;
 
         default:
             return {
@@ -157,7 +191,7 @@ function buildRequestBody(provider: string, modelId: string, message: string, co
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { modalId, message, image, apiEndpoint, apiKey, provider, modelId, headers, responsePath, conversationHistory, sessionId } = body;
+        const { modalId, message, image, apiEndpoint, apiKey, provider, modelId, headers, responsePath, conversationHistory, sessionId, webSearchEnabled } = body;
 
         if (!modalId || !message || !apiEndpoint) {
             return NextResponse.json(
@@ -197,7 +231,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Build request body based on provider with conversation history and image
-        const requestBody = buildRequestBody(provider || 'OpenAI', modelId, message, conversationHistory, image);
+        const requestBody = buildRequestBody(provider || 'OpenAI', modelId, message, conversationHistory, image, webSearchEnabled);
 
         // Make request to the AI modal's API
         try {

@@ -42,6 +42,7 @@ export default function ProfilePage() {
     const [saving, setSaving] = useState(false);
     const [editingProvider, setEditingProvider] = useState<string | null>(null);
     const [editingModels, setEditingModels] = useState<Modal[]>([]);
+    const [editingApiKey, setEditingApiKey] = useState<string>("");
     const [editingCredit, setEditingCredit] = useState<{ provider: string; credit: number } | null>(null);
     const [initialCredit, setInitialCredit] = useState<number>(0);
 
@@ -176,6 +177,10 @@ export default function ProfilePage() {
         }));
         setEditingModels(modalsWithDefaults);
         setEditingProvider(provider);
+
+        // Load current API key
+        const providerConfig = providerConfigs.find(c => c.provider === provider);
+        setEditingApiKey(providerConfig?.apiKey || "");
     };
 
     const handleUpdatePrice = (modelId: string, inputPrice: number, outputPrice: number) => {
@@ -189,6 +194,19 @@ export default function ProfilePage() {
     const handleSavePrices = async () => {
         setSaving(true);
         try {
+            // Update API key if changed
+            if (editingApiKey && editingProvider) {
+                await fetch("/api/provider-configs", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        provider: editingProvider,
+                        api_key: editingApiKey,
+                    }),
+                });
+            }
+
+            // Update model prices
             for (const modal of editingModels) {
                 await fetch("/api/modals", {
                     method: "PATCH",
@@ -204,10 +222,11 @@ export default function ProfilePage() {
             await fetchData();
             setEditingProvider(null);
             setEditingModels([]);
-            alert("Prices updated successfully!");
+            setEditingApiKey("");
+            alert("Settings updated successfully!");
         } catch (error) {
-            console.error("Error updating prices:", error);
-            alert("Failed to update prices");
+            console.error("Error updating settings:", error);
+            alert("Failed to update settings");
         } finally {
             setSaving(false);
         }
@@ -460,12 +479,13 @@ export default function ProfilePage() {
                         <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
                             <div className="sticky top-0 bg-white dark:bg-zinc-800 p-6 border-b border-gray-200 dark:border-zinc-700 flex items-center justify-between">
                                 <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                                    Edit Model Prices - {editingProvider}
+                                    Edit Provider Settings - {editingProvider}
                                 </h2>
                                 <button
                                     onClick={() => {
                                         setEditingProvider(null);
                                         setEditingModels([]);
+                                        setEditingApiKey("");
                                     }}
                                     className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                                 >
@@ -473,58 +493,89 @@ export default function ProfilePage() {
                                 </button>
                             </div>
 
-                            <div className="p-6 space-y-4">
-                                {editingModels.map((modal) => (
-                                    <div
-                                        key={modal._id}
-                                        className="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-700 rounded-lg"
-                                    >
-                                        <div className="flex-1">
-                                            <p className="font-medium text-gray-900 dark:text-gray-100">
-                                                {modal.name}
-                                            </p>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                {modal.modelId}
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-4">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm text-gray-600 dark:text-gray-400">
-                                                    Input $
-                                                </span>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    value={modal.inputPricePerMillion ?? 0}
-                                                    onChange={(e) =>
-                                                        handleUpdatePrice(modal._id, parseFloat(e.target.value) || 0, modal.outputPricePerMillion ?? 0)
-                                                    }
-                                                    className="w-24 px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100"
-                                                />
-                                                <span className="text-sm text-gray-600 dark:text-gray-400">
-                                                    /1M
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-sm text-gray-600 dark:text-gray-400">
-                                                    Output $
-                                                </span>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    value={modal.outputPricePerMillion ?? 0}
-                                                    onChange={(e) =>
-                                                        handleUpdatePrice(modal._id, modal.inputPricePerMillion ?? 0, parseFloat(e.target.value) || 0)
-                                                    }
-                                                    className="w-24 px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100"
-                                                />
-                                                <span className="text-sm text-gray-600 dark:text-gray-400">
-                                                    /1M
-                                                </span>
-                                            </div>
-                                        </div>
+                            <div className="p-6 space-y-6">
+                                {/* API Key Section */}
+                                <div className="pb-6 border-b border-gray-200 dark:border-zinc-700">
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                                        <Key className="w-5 h-5" />
+                                        API Key
+                                    </h3>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            API Key
+                                        </label>
+                                        <input
+                                            type="password"
+                                            value={editingApiKey}
+                                            onChange={(e) => setEditingApiKey(e.target.value)}
+                                            placeholder="Enter your API key"
+                                            className="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-gray-100"
+                                        />
+                                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                            Update the API key for this provider
+                                        </p>
                                     </div>
-                                ))}
+                                </div>
+
+                                {/* Model Prices Section */}
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                                        Model Pricing
+                                    </h3>
+                                    <div className="space-y-4">
+                                        {editingModels.map((modal) => (
+                                            <div
+                                                key={modal._id}
+                                                className="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-700 rounded-lg"
+                                            >
+                                                <div className="flex-1">
+                                                    <p className="font-medium text-gray-900 dark:text-gray-100">
+                                                        {modal.name}
+                                                    </p>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                        {modal.modelId}
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                                                            Input $
+                                                        </span>
+                                                        <input
+                                                            type="number"
+                                                            step="0.01"
+                                                            value={modal.inputPricePerMillion ?? 0}
+                                                            onChange={(e) =>
+                                                                handleUpdatePrice(modal._id, parseFloat(e.target.value) || 0, modal.outputPricePerMillion ?? 0)
+                                                            }
+                                                            className="w-24 px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100"
+                                                        />
+                                                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                                                            /1M
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                                                            Output $
+                                                        </span>
+                                                        <input
+                                                            type="number"
+                                                            step="0.01"
+                                                            value={modal.outputPricePerMillion ?? 0}
+                                                            onChange={(e) =>
+                                                                handleUpdatePrice(modal._id, modal.inputPricePerMillion ?? 0, parseFloat(e.target.value) || 0)
+                                                            }
+                                                            className="w-24 px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100"
+                                                        />
+                                                        <span className="text-sm text-gray-600 dark:text-gray-400">
+                                                            /1M
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="sticky bottom-0 bg-white dark:bg-zinc-800 p-6 border-t border-gray-200 dark:border-zinc-700 flex justify-end gap-3">
@@ -532,6 +583,7 @@ export default function ProfilePage() {
                                     onClick={() => {
                                         setEditingProvider(null);
                                         setEditingModels([]);
+                                        setEditingApiKey("");
                                     }}
                                     className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-lg"
                                 >
@@ -550,7 +602,7 @@ export default function ProfilePage() {
                                     ) : (
                                         <>
                                             <Save className="w-4 h-4" />
-                                            Save Prices
+                                            Save Changes
                                         </>
                                     )}
                                 </button>

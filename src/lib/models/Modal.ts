@@ -6,7 +6,8 @@ export type ProviderName =
     | 'Google'
     | 'DeepSeek'
     | 'Perplexity AI'
-    | 'xAI';
+    | 'xAI'
+    | 'Zhipu AI';
 
 export type RequestType = 'chat' | 'completion' | 'json' | 'image';
 
@@ -65,12 +66,9 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
         defaultRequestType: 'chat',
         defaultResponsePath: 'choices[0].message.content',
         availableModels: [
-            { id: 'gpt-5.1-chat-latest', name: 'GPT-5.1 Chat', inputPricePerMillion: 3.00, outputPricePerMillion: 15.00 },
-            { id: 'gpt-4.1', name: 'GPT-4.1', inputPricePerMillion: 10.00, outputPricePerMillion: 30.00 },
-            { id: 'gpt-4o-mini', name: 'GPT-4o Mini', inputPricePerMillion: 0.15, outputPricePerMillion: 0.60 },
-            { id: 'gpt-5-search-api', name: 'GPT-5 Search API', inputPricePerMillion: 5.00, outputPricePerMillion: 20.00 },
-            { id: 'gpt-4o-search-preview', name: 'GPT-4o Search Preview', inputPricePerMillion: 2.50, outputPricePerMillion: 10.00 },
-            { id: 'gpt-4o-mini-search-preview', name: 'GPT-4o Mini Search', inputPricePerMillion: 0.30, outputPricePerMillion: 1.20 },
+            { id: 'gpt-5.1', name: 'GPT-5.1', inputPricePerMillion: 1.250, outputPricePerMillion: 10.000 },
+            { id: 'gpt-5-mini', name: 'GPT-5 mini', inputPricePerMillion: 0.250, outputPricePerMillion: 2.000 },
+            { id: 'gpt-5-nano', name: 'GPT-5 nano', inputPricePerMillion: 0.050, outputPricePerMillion: 0.400 },
         ],
         requiresAuth: true,
         headerTemplate: {
@@ -84,8 +82,9 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
         defaultRequestType: 'chat',
         defaultResponsePath: 'content[0].text',
         availableModels: [
-            { id: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5', inputPricePerMillion: 3.00, outputPricePerMillion: 15.00 },
-            { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', inputPricePerMillion: 0.80, outputPricePerMillion: 4.00 },
+            { id: 'claude-opus-4-5-20250514', name: 'Opus 4.5', inputPricePerMillion: 5.00, outputPricePerMillion: 25.00 },
+            { id: 'claude-sonnet-4-5-20250514', name: 'Sonnet 4.5', inputPricePerMillion: 3.00, outputPricePerMillion: 15.00 },
+            { id: 'claude-haiku-4-5-20250514', name: 'Haiku 4.5', inputPricePerMillion: 1.00, outputPricePerMillion: 5.00 },
         ],
         requiresAuth: true,
         headerTemplate: {
@@ -100,11 +99,10 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
         defaultRequestType: 'chat',
         defaultResponsePath: 'candidates[0].content.parts[0].text',
         availableModels: [
-            { id: 'models/gemini-2.5-pro', name: 'Gemini 2.5 Pro', inputPricePerMillion: 1.25, outputPricePerMillion: 5.00 },
-            { id: 'models/gemini-2.5-flash', name: 'Gemini 2.5 Flash', inputPricePerMillion: 0.075, outputPricePerMillion: 0.30 },
-            { id: 'models/gemini-2.0-flash-thinking-exp', name: 'Gemini 2.0 Flash Thinking', inputPricePerMillion: 0.00, outputPricePerMillion: 0.00 },
-            { id: 'models/gemini-2.0-flash-thinking-exp-01-21', name: 'Gemini 2.0 Flash Thinking 01-21', inputPricePerMillion: 0.00, outputPricePerMillion: 0.00 },
-            { id: 'models/gemini-exp-1206', name: 'Gemini Exp 1206', inputPricePerMillion: 0.00, outputPricePerMillion: 0.00 },
+            { id: 'models/gemini-3-pro-preview', name: 'Gemini 3 Pro Preview', inputPricePerMillion: 2.00, outputPricePerMillion: 12.00 },
+            { id: 'models/gemini-2.5-pro', name: 'Gemini 2.5 Pro', inputPricePerMillion: 1.25, outputPricePerMillion: 10.00 },
+            { id: 'models/gemini-2.5-flash', name: 'Gemini 2.5 Flash', inputPricePerMillion: 0.30, outputPricePerMillion: 2.50 },
+            { id: 'models/gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash-Lite', inputPricePerMillion: 0.10, outputPricePerMillion: 0.40 },
         ],
         requiresAuth: true,
         headerTemplate: {
@@ -150,6 +148,22 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
         availableModels: [
             { id: 'grok-beta', name: 'Grok Beta', inputPricePerMillion: 5.00, outputPricePerMillion: 15.00 },
             { id: 'grok-vision-beta', name: 'Grok Vision Beta', inputPricePerMillion: 5.00, outputPricePerMillion: 15.00 },
+        ],
+        requiresAuth: true,
+        headerTemplate: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {{API_KEY}}'
+        }
+    },
+    {
+        name: 'Zhipu AI',
+        defaultEndpoint: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
+        defaultRequestType: 'chat',
+        defaultResponsePath: 'choices[0].message.content',
+        availableModels: [
+            { id: 'glm-4.6', name: 'GLM-4.6', inputPricePerMillion: 0.60, outputPricePerMillion: 2.20 },
+            { id: 'glm-4.5-air', name: 'GLM-4.5-Air', inputPricePerMillion: 0.20, outputPricePerMillion: 1.10 },
+            { id: 'glm-4.5-flash', name: 'GLM-4.5-Flash', inputPricePerMillion: 0.01, outputPricePerMillion: 0.01 },
         ],
         requiresAuth: true,
         headerTemplate: {

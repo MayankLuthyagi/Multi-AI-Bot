@@ -89,23 +89,25 @@ export async function POST(request: NextRequest) {
                             // Whitelist: only keep the models the user requested per provider
                             const ALLOWED_MODELS: Record<string, string[]> = {
                                 'OpenAI': [
-                                    'gpt-5.1-chat-latest', 'gpt-4.1', 'gpt-4o-mini',
-                                    // search models
-                                    'gpt-5-search-api', 'gpt-4o-search-preview', 'gpt-4o-mini-search-preview'
+                                    'gpt-5.1', 'gpt-5-mini', 'gpt-5-nano'
                                 ],
                                 'Anthropic': [
-                                    'claude-sonnet-4-5-20250929', 'claude-haiku-4-5-20251001'
+                                    'claude-opus-4-5-20250514', 'claude-opus-4-5',
+                                    'claude-sonnet-4-5-20250514', 'claude-sonnet-4-5',
+                                    'claude-haiku-4-5-20250514', 'claude-haiku-4-5'
                                 ],
                                 'Google': [
-                                    'models/gemini-2.5-pro', 'models/gemini-2.5-flash',
-                                    // gemini search variants
-                                    'models/gemini-2.0-flash-thinking-exp', 'models/gemini-2.0-flash-thinking-exp-01-21', 'models/gemini-exp-1206'
+                                    'models/gemini-3-pro-preview', 'models/gemini-2.5-pro',
+                                    'models/gemini-2.5-flash', 'models/gemini-2.5-flash-lite'
                                 ],
                                 'DeepSeek': [
                                     'deepseek-chat', 'deepseek-reasoner'
                                 ],
                                 'Perplexity AI': [
                                     'llama-3.1-sonar-large-128k-online', 'llama-3.1-sonar-small-128k-online', 'llama-3.1-sonar-huge-128k-online'
+                                ],
+                                'Zhipu AI': [
+                                    'glm-4.6', 'glm-4.5-air', 'glm-4.5-flash'
                                 ]
                             };
 
@@ -113,11 +115,19 @@ export async function POST(request: NextRequest) {
                             if (allowed && allowed.length > 0) {
                                 const allowedSet = new Set(allowed.map(s => s.toLowerCase()));
                                 // Normalize IDs and keep only allowed ones. Some providers prefix model ids with 'models/'.
-                                sourceModels = sourceModels.filter(m => {
+                                const filtered = sourceModels.filter(m => {
                                     const id = String(m.id).toLowerCase();
                                     const idNoPrefix = id.startsWith('models/') ? id : id;
                                     return allowedSet.has(id) || allowedSet.has(idNoPrefix);
                                 });
+
+                                // If filtering removed all models, fall back to template
+                                if (filtered.length > 0) {
+                                    sourceModels = filtered;
+                                } else {
+                                    console.warn('No models matched whitelist for', provider, '- using template models');
+                                    sourceModels = providerTemplate.availableModels;
+                                }
                             }
                         }
                     } else {

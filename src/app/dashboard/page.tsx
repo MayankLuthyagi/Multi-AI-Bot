@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Bot, Send, Loader2, ThumbsUp, ThumbsDown, Copy, ImagePlus, X } from "lucide-react";
+import { Bot, Send, Loader2, ThumbsUp, ThumbsDown, Copy, ImagePlus, X, Search } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -64,6 +64,7 @@ export default function DashboardPage() {
     const [isSaving, setIsSaving] = useState(false);
     const [uploadedImage, setUploadedImage] = useState<string | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [webSearchEnabled, setWebSearchEnabled] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const chatRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
@@ -390,6 +391,7 @@ export default function DashboardPage() {
                         responsePath: modal.responsePath,
                         conversationHistory: conversationHistory, // Send full chat history
                         sessionId: activeSessionId, // Send session ID for token tracking
+                        webSearchEnabled: webSearchEnabled, // Send search preference
                     }),
                 });
 
@@ -538,6 +540,7 @@ export default function DashboardPage() {
             'google': '/logo/google.png',
             'deepseek': '/logo/deepseek.png',
             'perplexity ai': '/logo/perplexityai.png',
+            'zhipu ai': '/logo/zhipuai.png',
         };
         return logoMap[providerLower] || null;
     };
@@ -650,6 +653,19 @@ export default function DashboardPage() {
                                                             )}
                                                         </div>
 
+                                                        {/* Copy button for user messages */}
+                                                        {msg.role === "user" && (
+                                                            <div className="flex gap-1 mt-1 mr-2">
+                                                                <button
+                                                                    onClick={() => copyResponseToClipboard(msg.content)}
+                                                                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors text-gray-400 dark:text-gray-500"
+                                                                    title="Copy message"
+                                                                >
+                                                                    <Copy className="h-3.5 w-3.5" />
+                                                                </button>
+                                                            </div>
+                                                        )}
+
                                                         {/* Like/Dislike buttons for assistant messages */}
                                                         {msg.role === "assistant" && (
                                                             <div className="flex flex-col gap-1 mt-1 ml-2">
@@ -682,24 +698,6 @@ export default function DashboardPage() {
                                                                         <Copy className="h-3.5 w-3.5" />
                                                                     </button>
                                                                 </div>
-                                                                {/* Token usage display */}
-                                                                {msg.tokenUsage && (
-                                                                    <div className="text-[10px] text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                                                                        <span title={`Input: ${msg.tokenUsage.inputTokens} | Output: ${msg.tokenUsage.outputTokens}`}>
-                                                                            🔢 {msg.tokenUsage.totalTokens.toLocaleString()} tokens
-                                                                        </span>
-                                                                        <span title={`$${msg.tokenUsage.estimatedCost.toFixed(6)}`}>
-                                                                            💰 ${msg.tokenUsage.estimatedCost < 0.01
-                                                                                ? msg.tokenUsage.estimatedCost.toFixed(6)
-                                                                                : msg.tokenUsage.estimatedCost.toFixed(4)}
-                                                                        </span>
-                                                                        {msg.tokenUsage.isEstimated && (
-                                                                            <span title="Token count estimated (API didn't provide exact count)" className="text-yellow-600 dark:text-yellow-500">
-                                                                                ≈
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                )}
                                                             </div>
                                                         )}
                                                     </div>
@@ -760,6 +758,19 @@ export default function DashboardPage() {
                             onChange={handleImageUpload}
                             className="hidden"
                         />
+
+                        {/* Web Search toggle button */}
+                        <button
+                            onClick={() => setWebSearchEnabled(!webSearchEnabled)}
+                            disabled={isSending || modals.length === 0}
+                            className={`p-2 sm:p-3 rounded-full transition-all flex-shrink-0 ${webSearchEnabled
+                                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                : 'bg-gray-700 text-white hover:bg-gray-600'
+                                } disabled:bg-gray-500 disabled:cursor-not-allowed`}
+                            title={webSearchEnabled ? "Web search enabled" : "Enable web search"}
+                        >
+                            <Search className="h-5 w-5 sm:h-6 sm:w-6" />
+                        </button>
 
                         {/* Image upload button */}
                         <button
