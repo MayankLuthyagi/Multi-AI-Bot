@@ -192,17 +192,6 @@ export default function SideMenu({
                 className={`fixed top-0 right-0 h-full w-80 bg-white dark:bg-zinc-800 shadow-lg transform transition-transform duration-300 ease-in-out z-50 flex flex-col
           ${openHamburger ? "translate-x-0" : "translate-x-full"}`}
             >
-                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-zinc-700">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                        Menu
-                    </h2>
-                    <button
-                        onClick={() => setOpenHamburger(false)}
-                        className="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700"
-                    >
-                        <X className="h-6 w-6 text-gray-800 dark:text-gray-100" />
-                    </button>
-                </div>
 
                 <div className="flex-1 overflow-y-auto">
                     {/* AI Modals Section */}
@@ -213,34 +202,51 @@ export default function SideMenu({
                             </div>
                         ) : (
                             <>
-                                <div className="mb-3 flex items-center justify-between">
-                                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                        AI Models
-                                    </h3>
-                                    <AllToggleButton modals={modals} onBulkUpdate={async (newStatus: string) => {
-                                        // Call backend to set all statuses
-                                        try {
-                                            const res = await fetch('/api/modals', {
-                                                method: 'PATCH',
-                                                headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({ action: 'setAllStatus', status: newStatus })
-                                            });
-                                            const data = await res.json();
-                                            if (data.success) {
-                                                // Refresh modals list
-                                                fetchModals();
-                                                if (onModalUpdate) onModalUpdate();
-                                            } else {
-                                                alert('Failed to update all models: ' + (data.error || 'unknown'));
-                                            }
-                                        } catch (err) {
-                                            console.error('Bulk update failed', err);
-                                            alert('Bulk update failed');
-                                        }
-                                    }} />
-                                </div>
-
                                 <div className="space-y-2 max-h-80 overflow-y-auto pr-2 sidebar-scroll">
+                                    {/* All Models Toggle */}
+                                    <div
+                                        className={`p-3 rounded-lg border-2 transition-all ${modals.length > 0 && modals.every(m => m.status === 'active')
+                                            ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                                            : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900"
+                                            }`}
+                                    >
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
+                                                        All Models
+                                                    </div>
+                                                    {modals.length > 0 && modals.every(m => m.status === 'active') && (
+                                                        <span className="flex-shrink-0 h-2 w-2 rounded-full bg-green-500"></span>
+                                                    )}
+                                                </div>
+                                                <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                    Toggle all models at once
+                                                </div>
+                                            </div>
+                                            <AllToggleButton modals={modals} onBulkUpdate={async (newStatus: string) => {
+                                                // Call backend to set all statuses
+                                                try {
+                                                    const res = await fetch('/api/modals', {
+                                                        method: 'PATCH',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({ action: 'setAllStatus', status: newStatus })
+                                                    });
+                                                    const data = await res.json();
+                                                    if (data.success) {
+                                                        // Refresh modals list
+                                                        fetchModals();
+                                                        if (onModalUpdate) onModalUpdate();
+                                                    } else {
+                                                        alert('Failed to update all models: ' + (data.error || 'unknown'));
+                                                    }
+                                                } catch (err) {
+                                                    console.error('Bulk update failed', err);
+                                                    alert('Bulk update failed');
+                                                }
+                                            }} />
+                                        </div>
+                                    </div>
                                     {modals.map((modal) => (
                                         <div
                                             key={modal._id}
@@ -261,11 +267,6 @@ export default function SideMenu({
                                                     </div>
                                                     <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                                                         {modal.provider}
-                                                    </div>
-                                                    <div className="text-xs text-gray-500 dark:text-gray-500">
-                                                        Status: <span className={modal.status === "active" ? "text-green-600 dark:text-green-400 font-medium" : "text-gray-500"}>
-                                                            {modal.status}
-                                                        </span>
                                                     </div>
                                                 </div>
                                                 <button
@@ -307,7 +308,6 @@ export default function SideMenu({
                                 title="New Chat"
                             >
                                 <MessageSquarePlus className="h-3.5 w-3.5" />
-                                New Chat
                             </button>
                         </div>
 
@@ -413,6 +413,14 @@ export default function SideMenu({
                         <LogOut className="h-5 w-5" />
                         Logout
                     </button>
+                    <button
+                        onClick={() => setOpenHamburger(false)}
+                        className="w-full flex items-center gap-2 text-left p-2 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200"
+                    >
+                        <X className="h-6 w-6 text-gray-800 dark:text-gray-100" />
+                        Close
+                    </button>
+
                 </div>
             </div>
 

@@ -79,12 +79,17 @@ function buildRequestBody(provider: string, modelId: string, message: string, co
                 ...baseParams,
             };
 
-            // Add web search for Zhipu AI if enabled
             if (webSearchEnabled) {
-                zhipuBody.tools = [{ type: 'web_search' }];
+                zhipuBody.tools = [
+                    {
+                        type: "web_search",
+                        web_search: {}
+                    }
+                ];
             }
 
             return zhipuBody;
+
 
         case 'Anthropic':
             // Anthropic vision format

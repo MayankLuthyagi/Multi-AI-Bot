@@ -272,21 +272,10 @@ export default function ProfilePage() {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 p-6">
             <div className="max-w-7xl mx-auto">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-8">
-                    AI Provider Management
-                </h1>
 
                 <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-md p-6 mb-8">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                        <Plus className="w-5 h-5" />
-                        Add New Provider
-                    </h2>
-
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Select Provider
-                            </label>
                             <select
                                 value={selectedProvider}
                                 onChange={(e) => setSelectedProvider(e.target.value)}
@@ -359,10 +348,6 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="space-y-4">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                        <Key className="w-5 h-5" />
-                        Configured Providers
-                    </h2>
 
                     {providerConfigs.length === 0 ? (
                         <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-md p-8 text-center">
