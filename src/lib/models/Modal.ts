@@ -84,7 +84,7 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
         defaultRequestType: 'chat',
         defaultResponsePath: 'content[0].text',
         availableModels: [
-            { id: 'claude-opus-4-5-20251101', name: 'Claude Opus 4.5', inputPricePerMillion: 15.00, outputPricePerMillion: 75.00 },
+            { id: 'claude-opus-4-5-20251101', name: 'Claude Opus 4.5', inputPricePerMillion: 15.00, outputPricePerMillion: 25.00 },
             { id: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5', inputPricePerMillion: 3.00, outputPricePerMillion: 15.00 },
             { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', inputPricePerMillion: 1.00, outputPricePerMillion: 5.00 },
         ],
