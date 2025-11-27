@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Optimize for serverless deployment
+  serverExternalPackages: [],
+  outputFileTracingIncludes: {
+    '/': ['./middleware.ts'],
+  },
 };
 
 export default nextConfig;
