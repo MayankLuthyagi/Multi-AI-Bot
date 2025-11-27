@@ -22,13 +22,6 @@ interface Modal {
     requestType?: string;
 }
 
-interface ProviderConfig {
-    _id: string;
-    provider: string;
-    api_key: string;
-    credit: number;
-}
-
 interface Message {
     role: "user" | "assistant";
     content: string;
@@ -56,7 +49,6 @@ interface ChatSession {
 export default function DashboardPage() {
     const router = useRouter();
     const [modals, setModals] = useState<Modal[]>([]);
-    const [providerConfigs, setProviderConfigs] = useState<ProviderConfig[]>([]);
     const [loading, setLoading] = useState(true);
     const [chatMessages, setChatMessages] = useState<{ [key: string]: Message[] }>({});
     const [inputValue, setInputValue] = useState("");
@@ -76,7 +68,6 @@ export default function DashboardPage() {
 
     useEffect(() => {
         const initializeDashboard = async () => {
-            await fetchProviderConfigs();
             await loadSessions(); // Load sessions first
             await fetchModals(); // Then fetch modals (won't overwrite session messages)
         };
@@ -265,18 +256,6 @@ export default function DashboardPage() {
         }
     };
 
-    const fetchProviderConfigs = async () => {
-        try {
-            const res = await fetch("/api/provider-configs");
-            const data = await res.json();
-            if (data.success) {
-                setProviderConfigs(data.configs);
-            }
-        } catch (error) {
-            console.error("Error fetching provider configs:", error);
-        }
-    };
-
     const fetchModals = async () => {
         try {
             const res = await fetch("/api/modals");
@@ -365,11 +344,6 @@ export default function DashboardPage() {
 
         const promises = modals.map(async (modal) => {
             try {
-                const providerConfig = providerConfigs.find(c => c.provider === modal.provider);
-                if (!providerConfig) {
-                    throw new Error(`No API key configured for ${modal.provider}`);
-                }
-
                 // Get conversation history for this specific modal (exclude the current user message)
                 const conversationHistory = (chatMessages[modal._id] || []).map(msg => ({
                     role: msg.role,
@@ -384,7 +358,6 @@ export default function DashboardPage() {
                         message: currentInput,
                         image: currentImage,
                         apiEndpoint: modal.apiEndpoint,
-                        apiKey: providerConfig.api_key,
                         provider: modal.provider,
                         modelId: modal.modelId,
                         headers: modal.headers,

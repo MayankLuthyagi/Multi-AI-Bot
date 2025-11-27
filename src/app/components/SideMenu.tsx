@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Menu, X, User, LogOut, MessageSquarePlus, Trash2, Edit2, Check } from "lucide-react";
+import { BarChart3, Menu, X, User, LogOut, MessageSquarePlus, Trash2, Edit2, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface Modal {
@@ -49,7 +49,7 @@ function AllToggleButton({ modals, onBulkUpdate }: { modals: Modal[]; onBulkUpda
     return (
         <button
             onClick={handleClick}
-            className={`flex-shrink-0 relative inline-flex h-6 w-12 items-center rounded-full transition-colors ${allActive ? 'bg-[#131111] border-white border' : 'bg-gray-300 dark:bg-zinc-600'}`}
+            className={`flex-shrink-0 relative inline-flex h-6 w-12 items-center rounded-full transition-colors ${allActive ? 'bg-[#131111] border-white border' : 'bg-zinc-400'}`}
             title={allActive ? 'Turn all models off' : 'Turn all models on'}
         >
             <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${allActive ? 'translate-x-7' : 'translate-x-1'}`} />
@@ -220,9 +220,6 @@ export default function SideMenu({
                                                         <span className="flex-shrink-0 h-2 w-2 rounded-full bg-green-500"></span>
                                                     )}
                                                 </div>
-                                                <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-                                                    Toggle all models at once
-                                                </div>
                                             </div>
                                             <AllToggleButton modals={modals} onBulkUpdate={async (newStatus: string) => {
                                                 // Call backend to set all statuses
@@ -259,21 +256,15 @@ export default function SideMenu({
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2 mb-1">
                                                         <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
-                                                            {modal.name}
+                                                            {modal.name} ({modal.provider})
                                                         </div>
-                                                        {modal.status === "active" && (
-                                                            <span className="flex-shrink-0 h-2 w-2 rounded-full bg-green-500"></span>
-                                                        )}
-                                                    </div>
-                                                    <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-                                                        {modal.provider}
                                                     </div>
                                                 </div>
                                                 <button
                                                     onClick={() => toggleModalStatus(modal._id, modal.status)}
                                                     className={`flex-shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${modal.status === "active"
                                                         ? "bg-[#131111] border-white border"
-                                                        : "bg-gray-300 dark:bg-zinc-600"
+                                                        : "bg-zinc-400"
                                                         }`}
                                                     title={modal.status === "active" ? "Deactivate" : "Activate"}
                                                 >
@@ -400,27 +391,32 @@ export default function SideMenu({
                 <div className="p-4 border-t border-gray-200 dark:border-zinc-700 space-y-1 flex-shrink-0">
                     <button
                         onClick={navigateToProfile}
-                        className="w-full flex items-center gap-2 text-left p-2 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200"
+                        className="w-full flex items-center gap-1 text-left p-1 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200"
                     >
-                        <User className="h-5 w-5" />
+                        <User className="h-3 w-3" />
                         Profile
                     </button>
-
-                    <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center gap-2 text-left p-2 rounded-md hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"
+                    <a
+                        href="/stats"
+                        className="w-full flex items-center gap-1 text-left p-1 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200"
                     >
-                        <LogOut className="h-5 w-5" />
-                        Logout
-                    </button>
+                        <BarChart3 className="h-3 w-3 text-gray-800 dark:text-gray-100" />
+                        Stats
+                    </a>
                     <button
                         onClick={() => setOpenHamburger(false)}
-                        className="w-full flex items-center gap-2 text-left p-2 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200"
+                        className="w-full flex items-center gap-1 text-left p-1 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200"
                     >
-                        <X className="h-6 w-6 text-gray-800 dark:text-gray-100" />
+                        <X className="h-3 w-3 text-gray-800 dark:text-gray-100" />
                         Close
                     </button>
-
+                    <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-1 text-left p-1 rounded-md hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"
+                    >
+                        <LogOut className="h-3 w-3" />
+                        Logout
+                    </button>
                 </div>
             </div>
 

@@ -339,7 +339,7 @@ export async function POST(request: NextRequest) {
 
     try {
         const body = await request.json();
-        const { modalId, message, image, apiEndpoint, apiKey, provider, modelId, headers, responsePath, conversationHistory, sessionId, webSearchEnabled } = body;
+        const { modalId, message, image, apiEndpoint, provider, modelId, headers, responsePath, conversationHistory, sessionId, webSearchEnabled } = body;
 
         if (!modalId || !message || !apiEndpoint) {
             return NextResponse.json(
@@ -350,7 +350,26 @@ export async function POST(request: NextRequest) {
 
         // Get user info from session
         const session = await getSession();
+        if (!session) {
+            return NextResponse.json(
+                { success: false, error: 'Unauthorized' },
+                { status: 401 }
+            );
+        }
         const userId = session?.email || 'anonymous';
+
+        // SECURITY: Fetch API key server-side from database
+        const { db } = await connectToDatabase();
+        const providerConfig = await db.collection<ProviderConfig>('providerConfigs').findOne({ provider });
+
+        if (!providerConfig || !providerConfig.api_key) {
+            return NextResponse.json(
+                { success: false, error: `No API key configured for ${provider}` },
+                { status: 400 }
+            );
+        }
+
+        const apiKey = providerConfig.api_key; // Use server-side API key
 
         // Build custom headers with API key replacement
         let requestHeaders: Record<string, string> = {

@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
                                     'deepseek-chat', 'deepseek-reasoner'
                                 ],
                                 'Perplexity AI': [
-                                    'sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-research'
+                                    'sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research'
                                 ],
                                 'Zhipu AI': [
                                     'glm-4.6', 'glm-4.5-air', 'glm-4.5-flash'

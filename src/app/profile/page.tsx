@@ -14,9 +14,9 @@ interface ProviderTemplate {
 
 interface ProviderConfig {
     provider: string;
-    apiKey: string;
     credit: number;
     totalTokensUsed: number;
+    // Note: API key is NOT included for security reasons - it's stored server-side only
 }
 
 interface Modal {
@@ -178,9 +178,8 @@ export default function ProfilePage() {
         setEditingModels(modalsWithDefaults);
         setEditingProvider(provider);
 
-        // Load current API key
-        const providerConfig = providerConfigs.find(c => c.provider === provider);
-        setEditingApiKey(providerConfig?.apiKey || "");
+        // Initialize API key input as empty (user can update it if needed)
+        setEditingApiKey("");
     };
 
     const handleUpdatePrice = (modelId: string, inputPrice: number, outputPrice: number) => {
@@ -396,9 +395,6 @@ export default function ProfilePage() {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                API Key: •••••••••
-                                            </p>
 
                                             {/* Credit Information */}
                                             <div className="bg-gray-50 dark:bg-zinc-700 rounded-lg p-3 space-y-2">
@@ -487,17 +483,17 @@ export default function ProfilePage() {
                                     </h3>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            API Key
+                                            Update API Key (optional)
                                         </label>
                                         <input
                                             type="password"
                                             value={editingApiKey}
                                             onChange={(e) => setEditingApiKey(e.target.value)}
-                                            placeholder="Enter your API key"
+                                            placeholder="Leave empty to keep current key"
                                             className="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-gray-100"
                                         />
                                         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                                            Update the API key for this provider
+                                            Enter a new API key only if you want to update it. Leave blank to keep the existing key.
                                         </p>
                                     </div>
                                 </div>

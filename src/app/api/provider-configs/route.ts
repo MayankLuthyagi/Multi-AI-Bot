@@ -3,13 +3,24 @@ import { connectToDatabase } from '@/src/lib/db';
 import { ProviderConfig, ProviderConfigCollection } from '@/src/lib/models/Modal';
 import { ObjectId } from 'mongodb';
 
-// GET all provider configs
+// GET all provider configs (WITHOUT exposing API keys)
 export async function GET() {
     try {
         const { db } = await connectToDatabase();
         const configs = await db.collection<ProviderConfig>(ProviderConfigCollection).find({}).toArray();
 
-        return NextResponse.json({ success: true, configs });
+        // SECURITY: Remove API keys from response - only send metadata
+        const safeConfigs = configs.map(config => ({
+            _id: config._id,
+            provider: config.provider,
+            credit: config.credit,
+            totalTokensUsed: config.totalTokensUsed,
+            createdAt: config.createdAt,
+            updatedAt: config.updatedAt,
+            // api_key is intentionally excluded for security
+        }));
+
+        return NextResponse.json({ success: true, configs: safeConfigs });
     } catch (error) {
         console.error('Error fetching provider configs:', error);
         return NextResponse.json(
