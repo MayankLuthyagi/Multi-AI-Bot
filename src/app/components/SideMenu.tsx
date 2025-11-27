@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BarChart3, Menu, X, User, LogOut, MessageSquarePlus, Trash2, Edit2, Check } from "lucide-react";
+import { Info, BarChart3, Menu, X, User, LogOut, MessageSquarePlus, Trash2, Edit2, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface Modal {
@@ -396,6 +396,13 @@ export default function SideMenu({
                         <User className="h-3 w-3" />
                         Profile
                     </button>
+                    <a
+                        href="/info"
+                        className="w-full flex items-center gap-1 text-left p-1 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200"
+                    >
+                        <Info className="h-3 w-3 text-gray-800 dark:text-gray-100" />
+                        Info
+                    </a>                    
                     <a
                         href="/stats"
                         className="w-full flex items-center gap-1 text-left p-1 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200"

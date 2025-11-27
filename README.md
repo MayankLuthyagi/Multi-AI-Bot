@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+# Multi-AI-Bot
+
+This project is a multi-provider AI chatbot platform built with [Next.js](https://nextjs.org) and TypeScript. It enables users to interact with various AI providers, manage chat sessions, track token usage, view provider statistics, and access coin price/history data. The platform includes authentication, an admin panel, dashboard, profile, and stats pages, with reusable UI components.
+
+---
+
+## Features
+
+- **Multi-provider AI chatbot**: Connects to different AI providers for chat functionality.
+- **Authentication**: User login/logout and session management.
+- **Chat Sessions**: Stores and manages user chat histories.
+- **Token Usage Tracking**: Monitors and analyzes token usage for cost management.
+- **Provider Statistics**: Displays usage and performance stats for each provider.
+- **Coin Price/History**: Shows cryptocurrency price and history data.
+- **Admin Panel**: Tools for managing users, providers, and costs.
+- **Dashboard/Profile/Stats Pages**: User-centric pages for data and settings.
+- **Reusable Components**: Includes LoginModal, navbar, SideMenu, ProviderStats, etc.
+
+---
+
+## Technologies & Tools
+
+- **Next.js** (React framework)
+- **TypeScript**
+- **PostCSS**
+- **ESLint**
+- **Geist Font** (via next/font)
+- **Modular API routes** (for chat, sessions, coins, providers, stats, etc.)
+
+---
+
+## Project Structure
+
+- `src/app/` – Main app pages and API routes
+  - `globals.css`, `layout.tsx`, `page.tsx` – Global styles and main layout
+  - `admin/panel/` – Admin panel features
+  - `api/` – Modular API routes for authentication, chat, sessions, coins, modals, providers, stats, token usage
+  - `dashboard/`, `info/`, `profile/`, `stats/` – User-facing pages
+- `src/components/` – UI components (LoginModal, navbar, SideMenu, ProviderStats)
+- `src/lib/` – Database, session, token counter, and models
+- `public/` – Static assets (e.g., logo)
+- `scripts/` – Project scripts
+- `package.json`, `tsconfig.json`, `eslint.config.mjs`, `postcss.config.mjs` – Configuration files
+
+---
 
 ## Getting Started
 
-First, run the development server:
+1. Install dependencies:
+	```bash
+	npm install
+	```
+2. Run the development server:
+	```bash
+	npm run dev
+	```
+3. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deployment
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Deploy easily on [Vercel](https://vercel.com/) using Next.js deployment documentation.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Learn Next.js](https://nextjs.org/learn)
+- [Next.js GitHub](https://github.com/vercel/next.js)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+If you need a custom README or want to add more details, feel free to update this file!

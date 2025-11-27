@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Key, Plus, Save, Trash2, Loader2, RefreshCw, Edit, X } from "lucide-react";
+import { Key, Plus, Save, Trash2, Loader2, RefreshCw, Edit, X, TrendingUp } from "lucide-react";
+import { useRouter } from 'next/navigation';
 
 interface ProviderTemplate {
     name: string;
@@ -32,7 +33,15 @@ interface Modal {
     totalCost: number;
 }
 
+interface Coin {
+    _id: string;
+    symbol: string;
+    createdAt: string;
+    history: Array<{ price: number; timestamp: string }>;
+}
+
 export default function ProfilePage() {
+    const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [providers, setProviders] = useState<ProviderTemplate[]>([]);
     const [providerConfigs, setProviderConfigs] = useState<ProviderConfig[]>([]);
@@ -46,25 +55,35 @@ export default function ProfilePage() {
     const [editingCredit, setEditingCredit] = useState<{ provider: string; credit: number } | null>(null);
     const [initialCredit, setInitialCredit] = useState<number>(0);
 
+    // Coin tracking states
+    const [coins, setCoins] = useState<Coin[]>([]);
+    const [newSymbol, setNewSymbol] = useState('');
+    const [adding, setAdding] = useState(false);
+    const [coinError, setCoinError] = useState('');
+    const [activeTab, setActiveTab] = useState<'providers' | 'coins'>('providers');
+
     useEffect(() => {
         fetchData();
     }, []);
 
     const fetchData = async () => {
         try {
-            const [providersRes, configsRes, modalsRes] = await Promise.all([
+            const [providersRes, configsRes, modalsRes, coinsRes] = await Promise.all([
                 fetch("/api/providers"),
                 fetch("/api/provider-configs"),
                 fetch("/api/modals"),
+                fetch("/api/coins"),
             ]);
 
             const providersData = await providersRes.json();
             const configsData = await configsRes.json();
             const modalsData = await modalsRes.json();
+            const coinsData = await coinsRes.json();
 
             setProviders(providersData.providers || []);
             setProviderConfigs(configsData.configs || []);
             setModals(modalsData.modals || []);
+            setCoins(coinsData.coins || []);
         } catch (error) {
             console.error("Error fetching data:", error);
         } finally {
@@ -260,6 +279,39 @@ export default function ProfilePage() {
         }
     };
 
+    // Coin tracking functions
+    const handleAddCoin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newSymbol.trim()) return;
+
+        setCoinError('');
+        setAdding(true);
+
+        try {
+            const response = await fetch('/api/coins', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ symbol: newSymbol.toUpperCase() }),
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                setNewSymbol('');
+                await fetchData();
+                alert(`Coin ${data.coin.symbol} added successfully!`);
+            } else {
+                setCoinError(data.error || 'Failed to add coin');
+            }
+        } catch (err: any) {
+            setCoinError(err.message || 'An error occurred');
+        } finally {
+            setAdding(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 flex items-center justify-center">
@@ -271,188 +323,217 @@ export default function ProfilePage() {
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 p-6">
             <div className="max-w-7xl mx-auto">
-
-                <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-md p-6 mb-8">
-                    <div className="space-y-4">
-                        <div>
-                            <select
-                                value={selectedProvider}
-                                onChange={(e) => setSelectedProvider(e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-gray-100"
-                            >
-                                <option value="">Choose a provider...</option>
-                                {providers
-                                    .filter((p) => !providerConfigs.find((c) => c.provider === p.name))
-                                    .map((provider) => (
-                                        <option key={provider.name} value={provider.name}>
-                                            {provider.name}
-                                        </option>
-                                    ))}
-                            </select>
-                        </div>
-
-                        {selectedProvider && (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    API Key
-                                </label>
-                                <input
-                                    type="password"
-                                    value={apiKey}
-                                    onChange={(e) => setApiKey(e.target.value)}
-                                    placeholder="Enter your API key"
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-gray-100"
-                                />
-                            </div>
-                        )}
-
-                        {selectedProvider && (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Initial Credit ($)
-                                </label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    value={initialCredit}
-                                    onChange={(e) => setInitialCredit(parseFloat(e.target.value) || 0)}
-                                    placeholder="Enter initial credit amount (optional)"
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-gray-100"
-                                />
-                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                    Set the credit budget for this provider (can be updated later)
-                                </p>
-                            </div>
-                        )}
-
+                {/* Tab Navigation */}
+                <div className="mb-6 border-b border-gray-200 dark:border-zinc-700">
+                    <div className="flex gap-4">
                         <button
-                            onClick={handleSaveProvider}
-                            disabled={!selectedProvider || !apiKey || saving}
-                            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            onClick={() => setActiveTab('providers')}
+                            className={`px-4 py-3 font-medium transition-colors border-b-2 ${activeTab === 'providers'
+                                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                                }`}
                         >
-                            {saving ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                    Saving...
-                                </>
-                            ) : (
-                                <>
-                                    <Save className="w-4 h-4" />
-                                    Save Provider
-                                </>
-                            )}
+                            AI Providers
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('coins')}
+                            className={`px-4 py-3 font-medium transition-colors border-b-2 flex items-center gap-2 ${activeTab === 'coins'
+                                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                                }`}
+                        >
+                            <TrendingUp className="w-4 h-4" />
+                            Cryptocurrency Tracker
                         </button>
                     </div>
                 </div>
 
-                <div className="space-y-4">
-
-                    {providerConfigs.length === 0 ? (
-                        <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-md p-8 text-center">
-                            <p className="text-gray-500 dark:text-gray-400">
-                                No providers configured yet. Add one above to get started!
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {providerConfigs.map((config) => {
-                                const providerModals = modals.filter((m) => m.provider === config.provider);
-                                const totalCost = providerModals.reduce((sum, m) => sum + (m.totalCost || 0), 0);
-                                const creditLeft = (config.credit || 0) - totalCost;
-
-                                return (
-                                    <div
-                                        key={config.provider}
-                                        className="bg-white dark:bg-zinc-800 rounded-lg shadow-md p-6"
+                {/* AI Providers Tab */}
+                {activeTab === 'providers' && (
+                    <>
+                        <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-md p-6 mb-8">
+                            <div className="space-y-4">
+                                <div>
+                                    <select
+                                        value={selectedProvider}
+                                        onChange={(e) => setSelectedProvider(e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-gray-100"
                                     >
-                                        <div className="flex items-center justify-between mb-4">
-                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                                {config.provider}
-                                            </h3>
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => handleEditProvider(config.provider)}
-                                                    className="text-green-500 hover:text-green-600"
-                                                    title="Edit model prices"
-                                                >
-                                                    <Edit className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleSyncModels(config.provider)}
-                                                    className="text-blue-500 hover:text-blue-600"
-                                                    title="Sync models to latest version"
-                                                >
-                                                    <RefreshCw className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteProvider(config.provider)}
-                                                    className="text-red-500 hover:text-red-600"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </div>
+                                        <option value="">Choose a provider...</option>
+                                        {providers
+                                            .filter((p) => !providerConfigs.find((c) => c.provider === p.name))
+                                            .map((provider) => (
+                                                <option key={provider.name} value={provider.name}>
+                                                    {provider.name}
+                                                </option>
+                                            ))}
+                                    </select>
+                                </div>
 
-                                        <div className="space-y-2">
+                                {selectedProvider && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            API Key
+                                        </label>
+                                        <input
+                                            type="password"
+                                            value={apiKey}
+                                            onChange={(e) => setApiKey(e.target.value)}
+                                            placeholder="Enter your API key"
+                                            className="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-gray-100"
+                                        />
+                                    </div>
+                                )}
 
-                                            {/* Credit Information */}
-                                            <div className="bg-gray-50 dark:bg-zinc-700 rounded-lg p-3 space-y-2">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                        Credit:
-                                                    </span>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                                                            ${config.credit?.toFixed(2) || '0.00'}
-                                                        </span>
+                                {selectedProvider && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Initial Credit ($)
+                                        </label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={initialCredit}
+                                            onChange={(e) => setInitialCredit(parseFloat(e.target.value) || 0)}
+                                            placeholder="Enter initial credit amount (optional)"
+                                            className="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-gray-100"
+                                        />
+                                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            Set the credit budget for this provider (can be updated later)
+                                        </p>
+                                    </div>
+                                )}
+
+                                <button
+                                    onClick={handleSaveProvider}
+                                    disabled={!selectedProvider || !apiKey || saving}
+                                    className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                >
+                                    {saving ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            Saving...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save className="w-4 h-4" />
+                                            Save Provider
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+
+                            {providerConfigs.length === 0 ? (
+                                <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-md p-8 text-center">
+                                    <p className="text-gray-500 dark:text-gray-400">
+                                        No providers configured yet. Add one above to get started!
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {providerConfigs.map((config) => {
+                                        const providerModals = modals.filter((m) => m.provider === config.provider);
+                                        const totalCost = providerModals.reduce((sum, m) => sum + (m.totalCost || 0), 0);
+                                        const creditLeft = (config.credit || 0) - totalCost;
+
+                                        return (
+                                            <div
+                                                key={config.provider}
+                                                className="bg-white dark:bg-zinc-800 rounded-lg shadow-md p-6"
+                                            >
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                                        {config.provider}
+                                                    </h3>
+                                                    <div className="flex gap-2">
                                                         <button
-                                                            onClick={() => handleEditCredit(config.provider, config.credit || 0)}
-                                                            className="text-blue-500 hover:text-blue-600"
-                                                            title="Edit credit"
+                                                            onClick={() => handleEditProvider(config.provider)}
+                                                            className="text-green-500 hover:text-green-600"
+                                                            title="Edit model prices"
                                                         >
-                                                            <Edit className="w-3 h-3" />
+                                                            <Edit className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleSyncModels(config.provider)}
+                                                            className="text-blue-500 hover:text-blue-600"
+                                                            title="Sync models to latest version"
+                                                        >
+                                                            <RefreshCw className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteProvider(config.provider)}
+                                                            className="text-red-500 hover:text-red-600"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
                                                         </button>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                                                        Tokens:
-                                                    </span>
-                                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                        {(config.totalTokensUsed || 0).toLocaleString()}
-                                                    </span>
-                                                </div>
-                                            </div>
 
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                                                Models: {providerModals.length}
-                                            </p>
-                                            <div className="mt-2 space-y-1">
-                                                {providerModals.map((modal) => (
-                                                    <div
-                                                        key={modal._id}
-                                                        className="text-xs text-gray-500 dark:text-gray-500 flex items-center justify-between gap-2"
-                                                    >
-                                                        <div className="flex items-center gap-2">
-                                                            <span
-                                                                className={`w-2 h-2 rounded-full ${modal.status === "active"
-                                                                    ? "bg-green-500"
-                                                                    : "bg-gray-400"
-                                                                    }`}
-                                                            />
-                                                            {modal.modelId}
+                                                <div className="space-y-2">
+
+                                                    {/* Credit Information */}
+                                                    <div className="bg-gray-50 dark:bg-zinc-700 rounded-lg p-3 space-y-2">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                                Credit:
+                                                            </span>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-sm font-bold text-green-600 dark:text-green-400">
+                                                                    ${config.credit?.toFixed(2) || '0.00'}
+                                                                </span>
+                                                                <button
+                                                                    onClick={() => handleEditCredit(config.provider, config.credit || 0)}
+                                                                    className="text-blue-500 hover:text-blue-600"
+                                                                    title="Edit credit"
+                                                                >
+                                                                    <Edit className="w-3 h-3" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                                                                Tokens:
+                                                            </span>
+                                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                                {(config.totalTokensUsed || 0).toLocaleString()}
+                                                            </span>
                                                         </div>
                                                     </div>
-                                                ))}
+
+                                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                                                        Models: {providerModals.length}
+                                                    </p>
+                                                    <div className="mt-2 space-y-1">
+                                                        {providerModals.map((modal) => (
+                                                            <div
+                                                                key={modal._id}
+                                                                className="text-xs text-gray-500 dark:text-gray-500 flex items-center justify-between gap-2"
+                                                            >
+                                                                <div className="flex items-center gap-2">
+                                                                    <span
+                                                                        className={`w-2 h-2 rounded-full ${modal.status === "active"
+                                                                            ? "bg-green-500"
+                                                                            : "bg-gray-400"
+                                                                            }`}
+                                                                    />
+                                                                    {modal.modelId}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
+                    </>
+                )}
 
                 {/* Edit Price Modal */}
                 {editingProvider && (
@@ -658,6 +739,80 @@ export default function ProfilePage() {
                             </div>
                         </div>
                     </div>
+                )}
+
+                {/* Cryptocurrency Tracker Tab */}
+                {activeTab === 'coins' && (
+                    <>
+                        {/* Add Coin Form */}
+                        <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-md p-6 mb-8">
+                            <form onSubmit={handleAddCoin} className="flex gap-4">
+                                <div className="flex-1">
+                                    <input
+                                        type="text"
+                                        value={newSymbol}
+                                        onChange={(e) => setNewSymbol(e.target.value.toUpperCase())}
+                                        placeholder="Enter coin symbol (e.g., BTCUSDT, ETHUSDT)"
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-zinc-700 text-gray-900 dark:text-gray-100"
+                                        disabled={adding}
+                                    />
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={adding || !newSymbol.trim()}
+                                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed font-medium flex items-center gap-2"
+                                >
+                                    {adding ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            Adding...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Plus className="w-4 h-4" />
+                                            Add Coin
+                                        </>
+                                    )}
+                                </button>
+                            </form>
+                            {coinError && (
+                                <div className="mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
+                                    {coinError}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Coins List */}
+                        <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-md p-6 mb-8">
+                            {coins.length === 0 ? (
+                                <div className="text-center py-12">
+                                    <p className="text-gray-600 dark:text-gray-400 mb-2">No coins being tracked</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-500">Add a coin above to start automatic price tracking</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    {coins.map((coin) => (
+                                        <div
+                                            key={coin._id}
+                                            className="border border-gray-200 dark:border-zinc-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-zinc-700/50 transition-colors flex items-center justify-between"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div>
+                                                    <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">{coin.symbol}</h3>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                        Added: {new Date(coin.createdAt).toLocaleDateString()} • {coin.history.length} price records
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs rounded-full font-medium">
+                                                Active
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </>
                 )}
             </div>
         </div>
