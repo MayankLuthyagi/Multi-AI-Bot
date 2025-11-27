@@ -55,6 +55,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
                         <input
                             required
                             type="email"
+                            autoComplete="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             className="mt-1 block w-full rounded-md border border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-gray-900 dark:text-gray-100 p-2 focus:ring-2 focus:ring-blue-500 outline-none"

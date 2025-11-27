@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { Pie } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js';
+import { Pie, Bar } from 'react-chartjs-2';
 import LoginModal from "../components/LoginModal";
-ChartJS.register(ArcElement, Tooltip, Legend);
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 interface ModelStats {
     name: string;
@@ -346,6 +346,131 @@ export default function ProviderStats() {
         }).format(amount);
     };
 
+    const getModelPricingBarChartData = () => {
+        if (!stats) return null;
+
+        // Get all models and calculate total price (input + output)
+        const allModels = stats.byProvider
+            .flatMap(provider =>
+                provider.models.map(model => ({
+                    ...model,
+                    providerName: provider.provider,
+                    totalPrice: (model.inputPricePerMillion || 0) + (model.outputPricePerMillion || 0)
+                }))
+            )
+            .sort((a, b) => a.totalPrice - b.totalPrice);
+
+        return {
+            labels: allModels.map(m => `${m.name} (${m.providerName})`),
+            datasets: [
+                {
+                    label: 'Input Price',
+                    data: allModels.map(m => m.inputPricePerMillion || 0),
+                    backgroundColor: 'rgba(0, 0, 0, 1)',
+                    borderColor: 'rgba(0, 0, 0, 1)',
+                    borderWidth: 1,
+                },
+                {
+                    label: 'Output Price',
+                    data: allModels.map(m => m.outputPricePerMillion || 0),
+                    backgroundColor: 'rgba(180, 180, 180, 0.85)',
+                    borderColor: 'rgba(180, 180, 180, 1)',
+                    borderWidth: 1,
+                }
+            ],
+        };
+    };
+
+    const barChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            x: {
+                ticks: {
+                    color: '#d1d5db',
+                    font: {
+                        size: 10,
+                    },
+                    maxRotation: 45,
+                    minRotation: 45,
+                },
+                grid: {
+                    color: 'rgba(75, 85, 99, 0.3)',
+                },
+            },
+            y: {
+                ticks: {
+                    color: '#d1d5db',
+                    callback: function (value: any) {
+                        return '$' + value.toFixed(2);
+                    }
+                },
+                grid: {
+                    color: 'rgba(75, 85, 99, 0.3)',
+                },
+                title: {
+                    display: true,
+                    text: 'Price per 1M Tokens ($)',
+                    color: '#d1d5db',
+                    font: {
+                        size: 12,
+                        weight: 'bold' as const,
+                    }
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                position: 'top' as const,
+                labels: {
+                    color: '#d1d5db',
+                    font: {
+                        size: 12,
+                        weight: 'bold' as const,
+                    },
+                    padding: 15,
+                },
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                padding: 12,
+                titleColor: '#fff',
+                bodyColor: '#fff',
+                borderColor: '#4b5563',
+                borderWidth: 1,
+                callbacks: {
+                    label: function (context: any) {
+                        const label = context.dataset.label || '';
+                        const value = context.parsed.y;
+                        return `${label}: $${value.toFixed(3)}`;
+                    },
+                    afterBody: function (context: any) {
+                        const dataIndex = context[0].dataIndex;
+                        const allModels = stats?.byProvider
+                            .flatMap(provider =>
+                                provider.models.map(model => ({
+                                    ...model,
+                                    providerName: provider.provider,
+                                    totalPrice: (model.inputPricePerMillion || 0) + (model.outputPricePerMillion || 0)
+                                }))
+                            )
+                            .sort((a, b) => a.totalPrice - b.totalPrice);
+
+                        if (allModels && allModels[dataIndex]) {
+                            const model = allModels[dataIndex];
+                            return [
+                                '',
+                                `Total: $${model.totalPrice.toFixed(3)}`,
+                                `Status: ${model.status}`
+                            ];
+                        }
+                        return [];
+                    }
+                }
+            }
+        }
+    };
+
     if (loading) {
         return (
             // Dark theme loader
@@ -385,9 +510,10 @@ export default function ProviderStats() {
     }
 
     const pieData = getPieChartData();
+    const barData = getModelPricingBarChartData();
     return (
         <div className="space-y-6">
-                        {/* Login Modal */}
+            {/* Login Modal */}
             <LoginModal
                 isOpen={isLoginModalOpen}
                 onClose={() => setIsLoginModalOpen(false)}
@@ -425,6 +551,17 @@ export default function ProviderStats() {
                         <p className="sm:text-md lg:text-2xl font-bold text-white">
                             {stats.overall.totalModels}
                         </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Model Pricing Bar Chart */}
+            <div className="bg-[#38343a] rounded-xl p-8 border border-gray-700 shadow-2xl">
+                <div className="overflow-x-auto">
+                    <div className="min-w-[800px] h-[500px]">
+                        {isMounted && barData && (
+                            <Bar data={barData} options={barChartOptions} />
+                        )}
                     </div>
                 </div>
             </div>
