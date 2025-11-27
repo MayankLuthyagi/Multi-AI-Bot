@@ -7,7 +7,9 @@ export type ProviderName =
     | 'DeepSeek'
     | 'Perplexity AI'
     | 'xAI'
-    | 'Zhipu AI';
+    | 'Zhipu AI'
+    | 'Mistral AI'
+    | 'Moonshot AI';
 
 export type RequestType = 'chat' | 'completion' | 'json' | 'image';
 
@@ -82,9 +84,9 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
         defaultRequestType: 'chat',
         defaultResponsePath: 'content[0].text',
         availableModels: [
-            { id: 'claude-opus-4-5-20250514', name: 'Opus 4.5', inputPricePerMillion: 5.00, outputPricePerMillion: 25.00 },
-            { id: 'claude-sonnet-4-5-20250514', name: 'Sonnet 4.5', inputPricePerMillion: 3.00, outputPricePerMillion: 15.00 },
-            { id: 'claude-haiku-4-5-20250514', name: 'Haiku 4.5', inputPricePerMillion: 1.00, outputPricePerMillion: 5.00 },
+            { id: 'claude-opus-4-5-20251101', name: 'Claude Opus 4.5', inputPricePerMillion: 15.00, outputPricePerMillion: 75.00 },
+            { id: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5', inputPricePerMillion: 3.00, outputPricePerMillion: 15.00 },
+            { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', inputPricePerMillion: 1.00, outputPricePerMillion: 5.00 },
         ],
         requiresAuth: true,
         headerTemplate: {
@@ -164,6 +166,36 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
             { id: 'glm-4.6', name: 'GLM-4.6', inputPricePerMillion: 0.60, outputPricePerMillion: 2.20 },
             { id: 'glm-4.5-air', name: 'GLM-4.5-Air', inputPricePerMillion: 0.20, outputPricePerMillion: 1.10 },
             { id: 'glm-4.5-flash', name: 'GLM-4.5-Flash', inputPricePerMillion: 0.01, outputPricePerMillion: 0.01 },
+        ],
+        requiresAuth: true,
+        headerTemplate: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {{API_KEY}}'
+        }
+    },
+    {
+        name: 'Mistral AI',
+        defaultEndpoint: 'https://api.mistral.ai/v1/chat/completions',
+        defaultRequestType: 'chat',
+        defaultResponsePath: 'choices[0].message.content',
+        availableModels: [
+            { id: 'mistral-large-latest', name: 'Mistral Large', inputPricePerMillion: 2.00, outputPricePerMillion: 6.00 },
+            { id: 'mistral-medium-latest', name: 'Mistral Medium 3', inputPricePerMillion: 0.40, outputPricePerMillion: 2.00 },
+            { id: 'mistral-small-latest', name: 'Mistral Small 3.2', inputPricePerMillion: 0.10, outputPricePerMillion: 0.30 },
+        ],
+        requiresAuth: true,
+        headerTemplate: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {{API_KEY}}'
+        }
+    },
+    {
+        name: 'Moonshot AI',
+        defaultEndpoint: 'https://api.moonshot.cn/v1/chat/completions',
+        defaultRequestType: 'chat',
+        defaultResponsePath: 'choices[0].message.content',
+        availableModels: [
+            { id: 'kimi-latest', name: 'Kimi Latest', inputPricePerMillion: 0.20, outputPricePerMillion: 2.00 },
         ],
         requiresAuth: true,
         headerTemplate: {
