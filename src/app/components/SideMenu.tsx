@@ -388,7 +388,7 @@ export default function SideMenu({
                 </div>
 
                 {/* Bottom Actions */}
-                <div className="p-4 border-t border-gray-200 dark:border-zinc-700 space-y-1 flex-shrink-0">
+                <div className="p-2 border-t border-gray-200 dark:border-zinc-700 space-y-1 flex-shrink-0">
                     <button
                         onClick={navigateToProfile}
                         className="w-full flex items-center gap-1 text-left p-1 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200"
