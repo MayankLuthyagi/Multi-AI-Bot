@@ -365,7 +365,7 @@ export default function SideMenu({
                                                             className="p-1 rounded hover:bg-blue-100 dark:hover:bg-blue-900/20 text-blue-600"
                                                             title="Rename"
                                                         >
-                                                            <Edit2 className="h-3 w-3" />
+                                                            <Edit2 className="h-3 w-3 text-gray-100 cursor-pointer" />
                                                         </button>
                                                         {sessions.length > 1 && (
                                                             <button
@@ -375,7 +375,7 @@ export default function SideMenu({
                                                                         onDeleteSession?.(sessionId);
                                                                     }
                                                                 }}
-                                                                className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600"
+                                                                className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 cursor-pointer"
                                                                 title="Delete"
                                                             >
                                                                 <Trash2 className="h-3 w-3" />

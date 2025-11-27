@@ -745,13 +745,6 @@ export default function DashboardPage() {
                             </div>
                         )}
 
-                        {isSaving && (
-                            <div className="hidden sm:flex text-xs text-gray-400 dark:text-gray-500 items-center gap-1">
-                                <div className="h-2 w-2 bg-blue-500 rounded-full animate-pulse"></div>
-                                Saving...
-                            </div>
-                        )}
-
                         {/* Hidden file input */}
                         <input
                             ref={fileInputRef}
@@ -765,9 +758,9 @@ export default function DashboardPage() {
                         <button
                             onClick={() => setWebSearchEnabled(!webSearchEnabled)}
                             disabled={isSending || modals.length === 0}
-                            className={`p-2 sm:p-3 rounded-full transition-all flex-shrink-0 ${webSearchEnabled
-                                ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                : 'bg-gray-700 text-white hover:bg-gray-600'
+                            className={`p-2 sm:p-3 rounded-full transition-all flex-shrink-0 cursor-pointer ${webSearchEnabled
+                                ? 'bg-[#131111] text-white hover:bg-black'
+                                : 'bg-[#38343a] text-white hover:bg-[#4a4750]'
                                 } disabled:bg-gray-500 disabled:cursor-not-allowed`}
                             title={webSearchEnabled ? "Web search enabled" : "Enable web search"}
                         >
@@ -778,7 +771,7 @@ export default function DashboardPage() {
                         <button
                             onClick={triggerImageUpload}
                             disabled={isSending || modals.length === 0}
-                            className="p-2 sm:p-3 rounded-full bg-gray-700 text-white hover:bg-gray-600 disabled:bg-gray-500 disabled:cursor-not-allowed transition-all flex-shrink-0"
+                            className="p-2 sm:p-3 rounded-full bg-[#38343a] text-white hover:bg-[#4a4750] disabled:bg-gray-500 cursor-pointer transition-all flex-shrink-0"
                             title="Upload image"
                         >
                             <ImagePlus className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -800,7 +793,7 @@ export default function DashboardPage() {
                         <button
                             onClick={sendToAllModals}
                             disabled={isSending || !inputValue.trim() || modals.length === 0}
-                            className="p-2 sm:p-3 rounded-full bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all flex-shrink-0"
+                            className="p-2 sm:p-3 rounded-full bg-[#4a4750] text-white hover:bg-[#4a4750] disabled:bg-[#38343a] cursor-pointer transition-all flex-shrink-0"
                         >
                             {isSending ? (
                                 <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />

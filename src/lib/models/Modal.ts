@@ -136,7 +136,7 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
             { id: 'sonar-pro', name: 'Sonar Pro', inputPricePerMillion: 3.00, outputPricePerMillion: 15.00 },
             { id: 'sonar-reasoning', name: 'Sonar Reasoning', inputPricePerMillion: 1.00, outputPricePerMillion: 5.00 },
             { id: 'sonar-reasoning-pro', name: 'Sonar Reasoning Pro', inputPricePerMillion: 2.00, outputPricePerMillion: 8.00 },
-            { id: 'sonar-research', name: 'Sonar Research', inputPricePerMillion: 7.00, outputPricePerMillion: 8.00 },
+            { id: 'sonar-deep-research', name: 'Sonar Research', inputPricePerMillion: 7.00, outputPricePerMillion: 8.00 },
         ],
         requiresAuth: true,
         headerTemplate: {
