@@ -92,9 +92,9 @@ export async function POST(request: NextRequest) {
                                     'gpt-5.1', 'gpt-5-mini', 'gpt-5-nano'
                                 ],
                                 'Anthropic': [
-                                    'claude-opus-4-5-20250514', 'claude-opus-4-5',
-                                    'claude-sonnet-4-5-20250514', 'claude-sonnet-4-5',
-                                    'claude-haiku-4-5-20250514', 'claude-haiku-4-5'
+                                    'claude-opus-4-5-20250514',
+                                    'claude-sonnet-4-5-20250514',
+                                    'claude-haiku-4-5-20250514',
                                 ],
                                 'Google': [
                                     'models/gemini-3-pro-preview', 'models/gemini-2.5-pro',
@@ -104,10 +104,16 @@ export async function POST(request: NextRequest) {
                                     'deepseek-chat', 'deepseek-reasoner'
                                 ],
                                 'Perplexity AI': [
-                                    'llama-3.1-sonar-large-128k-online', 'llama-3.1-sonar-small-128k-online', 'llama-3.1-sonar-huge-128k-online'
+                                    'sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-research'
                                 ],
                                 'Zhipu AI': [
                                     'glm-4.6', 'glm-4.5-air', 'glm-4.5-flash'
+                                ],
+                                'Moonshot AI': [
+                                    'kimi-latest'
+                                ],
+                                'Mistral AI': [
+                                    'mistral-large-latest', 'mistral-medium-latest', 'mistral-small-latest'
                                 ]
                             };
 

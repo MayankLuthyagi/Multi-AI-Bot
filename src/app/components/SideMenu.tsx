@@ -49,7 +49,7 @@ function AllToggleButton({ modals, onBulkUpdate }: { modals: Modal[]; onBulkUpda
     return (
         <button
             onClick={handleClick}
-            className={`flex-shrink-0 relative inline-flex h-6 w-12 items-center rounded-full transition-colors ${allActive ? 'bg-green-600' : 'bg-gray-300 dark:bg-zinc-600'}`}
+            className={`flex-shrink-0 relative inline-flex h-6 w-12 items-center rounded-full transition-colors ${allActive ? 'bg-[#131111] border-white border' : 'bg-gray-300 dark:bg-zinc-600'}`}
             title={allActive ? 'Turn all models off' : 'Turn all models on'}
         >
             <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${allActive ? 'translate-x-7' : 'translate-x-1'}`} />
@@ -193,9 +193,9 @@ export default function SideMenu({
           ${openHamburger ? "translate-x-0" : "translate-x-full"}`}
             >
 
-                <div className="flex-1 overflow-y-auto">
+                <div className="flex-1 overflow-hidden flex flex-col">
                     {/* AI Modals Section */}
-                    <div className="p-4 border-b border-gray-200 dark:border-zinc-700">
+                    <div className="p-4 border-b border-gray-200 dark:border-zinc-700 flex-shrink-0">
                         {loading ? (
                             <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
                                 Loading modals...
@@ -206,7 +206,7 @@ export default function SideMenu({
                                     {/* All Models Toggle */}
                                     <div
                                         className={`p-3 rounded-lg border-2 transition-all ${modals.length > 0 && modals.every(m => m.status === 'active')
-                                            ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                                            ? "border-black bg-[#131111]"
                                             : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900"
                                             }`}
                                     >
@@ -251,7 +251,7 @@ export default function SideMenu({
                                         <div
                                             key={modal._id}
                                             className={`p-3 rounded-lg border-2 transition-all ${modal.status === "active"
-                                                ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                                                ? "border-black bg-[#131111]"
                                                 : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900"
                                                 }`}
                                         >
@@ -272,7 +272,7 @@ export default function SideMenu({
                                                 <button
                                                     onClick={() => toggleModalStatus(modal._id, modal.status)}
                                                     className={`flex-shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${modal.status === "active"
-                                                        ? "bg-green-600"
+                                                        ? "bg-[#131111] border-white border"
                                                         : "bg-gray-300 dark:bg-zinc-600"
                                                         }`}
                                                     title={modal.status === "active" ? "Deactivate" : "Activate"}
@@ -291,8 +291,8 @@ export default function SideMenu({
                     </div>
 
                     {/* Chat Sessions Section */}
-                    <div className="p-4">
-                        <div className="flex items-center justify-between mb-3">
+                    <div className="p-4 flex-1 overflow-hidden flex flex-col">
+                        <div className="flex items-center justify-between mb-3 flex-shrink-0">
                             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                                 Chat History {sessions.length > 0 && (
                                     <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">
@@ -304,22 +304,22 @@ export default function SideMenu({
                                 onClick={() => {
                                     onCreateSession?.();
                                 }}
-                                className="flex items-center gap-1 px-2 py-1 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium transition-colors"
+                                className="flex items-center gap-1 px-2 py-1 rounded-md bg-[#131111] text-white text-xs font-medium transition-colors cursor-pointer"
                                 title="New Chat"
                             >
-                                <MessageSquarePlus className="h-3.5 w-3.5" />
+                                +
                             </button>
                         </div>
 
                         {sessions.length > 0 ? (
-                            <div className="space-y-1 max-h-96 overflow-y-auto pr-2 sidebar-scroll">
+                            <div className="space-y-1 flex-1 overflow-y-auto pr-2 sidebar-scroll">
                                 {sessions.map((session) => {
                                     const sessionId = session._id || session.id || '';
                                     return (
                                         <div
                                             key={sessionId}
                                             className={`group relative p-2 rounded-md cursor-pointer transition-colors ${activeSessionId === sessionId
-                                                ? "bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700"
+                                                ? "bg-[#131111] border border-black"
                                                 : "hover:bg-gray-100 dark:hover:bg-zinc-700"
                                                 }`}
                                         >
@@ -397,7 +397,7 @@ export default function SideMenu({
                 </div>
 
                 {/* Bottom Actions */}
-                <div className="p-4 border-t border-gray-200 dark:border-zinc-700 space-y-2">
+                <div className="p-4 border-t border-gray-200 dark:border-zinc-700 space-y-1 flex-shrink-0">
                     <button
                         onClick={navigateToProfile}
                         className="w-full flex items-center gap-2 text-left p-2 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200"

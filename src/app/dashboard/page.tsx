@@ -541,6 +541,8 @@ export default function DashboardPage() {
             'deepseek': '/logo/deepseek.png',
             'perplexity ai': '/logo/perplexityai.png',
             'zhipu ai': '/logo/zhipuai.png',
+            'moonshot ai': '/logo/moonshotai.png',
+            'mistral ai': '/logo/mistralai.png'
         };
         return logoMap[providerLower] || null;
     };

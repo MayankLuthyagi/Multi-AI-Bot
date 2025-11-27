@@ -132,9 +132,11 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
         defaultRequestType: 'chat',
         defaultResponsePath: 'choices[0].message.content',
         availableModels: [
-            { id: 'llama-3.1-sonar-large-128k-online', name: 'Sonar Large Online', inputPricePerMillion: 1.00, outputPricePerMillion: 1.00 },
-            { id: 'llama-3.1-sonar-small-128k-online', name: 'Sonar Small Online', inputPricePerMillion: 0.20, outputPricePerMillion: 0.20 },
-            { id: 'llama-3.1-sonar-huge-128k-online', name: 'Sonar Huge Online', inputPricePerMillion: 5.00, outputPricePerMillion: 5.00 },
+            { id: 'sonar', name: 'Sonar', inputPricePerMillion: 1.00, outputPricePerMillion: 1.00 },
+            { id: 'sonar-pro', name: 'Sonar Pro', inputPricePerMillion: 3.00, outputPricePerMillion: 15.00 },
+            { id: 'sonar-reasoning', name: 'Sonar Reasoning', inputPricePerMillion: 1.00, outputPricePerMillion: 5.00 },
+            { id: 'sonar-reasoning-pro', name: 'Sonar Reasoning Pro', inputPricePerMillion: 2.00, outputPricePerMillion: 8.00 },
+            { id: 'sonar-research', name: 'Sonar Research', inputPricePerMillion: 7.00, outputPricePerMillion: 8.00 },
         ],
         requiresAuth: true,
         headerTemplate: {
