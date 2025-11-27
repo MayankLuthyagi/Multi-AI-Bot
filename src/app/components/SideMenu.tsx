@@ -202,10 +202,10 @@ export default function SideMenu({
                             </div>
                         ) : (
                             <>
-                                <div className="space-y-2 max-h-80 overflow-y-auto pr-2 sidebar-scroll">
+                                <div className="space-y-1 max-h-70 overflow-y-auto pr-2 sidebar-scroll">
                                     {/* All Models Toggle */}
                                     <div
-                                        className={`p-3 rounded-lg border-2 transition-all ${modals.length > 0 && modals.every(m => m.status === 'active')
+                                        className={`p-2 rounded-lg border-2 transition-all ${modals.length > 0 && modals.every(m => m.status === 'active')
                                             ? "border-black bg-[#131111]"
                                             : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900"
                                             }`}
@@ -247,7 +247,7 @@ export default function SideMenu({
                                     {modals.map((modal) => (
                                         <div
                                             key={modal._id}
-                                            className={`p-3 rounded-lg border-2 transition-all ${modal.status === "active"
+                                            className={`p-2 rounded-lg border-2 transition-all ${modal.status === "active"
                                                 ? "border-black bg-[#131111]"
                                                 : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900"
                                                 }`}
