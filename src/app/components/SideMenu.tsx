@@ -395,14 +395,7 @@ export default function SideMenu({
                     >
                         <User className="h-3 w-3" />
                         Profile
-                    </button>
-                    <a
-                        href="/info"
-                        className="w-full flex items-center gap-1 text-left p-1 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200"
-                    >
-                        <Info className="h-3 w-3 text-gray-800 dark:text-gray-100" />
-                        Info
-                    </a>                    
+                    </button>                 
                     <a
                         href="/stats"
                         className="w-full flex items-center gap-1 text-left p-1 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200"
