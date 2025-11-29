@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Key, Plus, Save, Trash2, Loader2, RefreshCw, Edit, X, TrendingUp } from "lucide-react";
 import { useRouter } from 'next/navigation';
-
+import SideMenu from "../components/SideMenu"; // Adjust this path if needed
 interface ProviderTemplate {
     name: string;
     availableModels: { id: string; name: string; inputPricePerMillion: number; outputPricePerMillion: number }[];
@@ -321,7 +321,11 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 p-6">
+        <>
+        <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 p-2">
+            <div className="flex justify-end">
+                <SideMenu/>
+            </div>
             <div className="max-w-7xl mx-auto">
                 {/* Tab Navigation */}
                 <div className="mb-6 border-b border-gray-200 dark:border-zinc-700">
@@ -334,16 +338,6 @@ export default function ProfilePage() {
                                 }`}
                         >
                             AI Providers
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('coins')}
-                            className={`px-4 py-3 font-medium transition-colors border-b-2 flex items-center gap-2 ${activeTab === 'coins'
-                                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                                }`}
-                        >
-                            <TrendingUp className="w-4 h-4" />
-                            Cryptocurrency Tracker
                         </button>
                     </div>
                 </div>
@@ -741,80 +735,8 @@ export default function ProfilePage() {
                     </div>
                 )}
 
-                {/* Cryptocurrency Tracker Tab */}
-                {activeTab === 'coins' && (
-                    <>
-                        {/* Add Coin Form */}
-                        <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-md p-6 mb-8">
-                            <form onSubmit={handleAddCoin} className="flex gap-4">
-                                <div className="flex-1">
-                                    <input
-                                        type="text"
-                                        value={newSymbol}
-                                        onChange={(e) => setNewSymbol(e.target.value.toUpperCase())}
-                                        placeholder="Enter coin symbol (e.g., BTCUSDT, ETHUSDT)"
-                                        className="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-zinc-700 text-gray-900 dark:text-gray-100"
-                                        disabled={adding}
-                                    />
-                                </div>
-                                <button
-                                    type="submit"
-                                    disabled={adding || !newSymbol.trim()}
-                                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed font-medium flex items-center gap-2"
-                                >
-                                    {adding ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            Adding...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Plus className="w-4 h-4" />
-                                            Add Coin
-                                        </>
-                                    )}
-                                </button>
-                            </form>
-                            {coinError && (
-                                <div className="mt-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
-                                    {coinError}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Coins List */}
-                        <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-md p-6 mb-8">
-                            {coins.length === 0 ? (
-                                <div className="text-center py-12">
-                                    <p className="text-gray-600 dark:text-gray-400 mb-2">No coins being tracked</p>
-                                    <p className="text-sm text-gray-500 dark:text-gray-500">Add a coin above to start automatic price tracking</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-2">
-                                    {coins.map((coin) => (
-                                        <div
-                                            key={coin._id}
-                                            className="border border-gray-200 dark:border-zinc-700 rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-zinc-700/50 transition-colors flex items-center justify-between"
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div>
-                                                    <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">{coin.symbol}</h3>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                        Added: {new Date(coin.createdAt).toLocaleDateString()} • {coin.history.length} price records
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs rounded-full font-medium">
-                                                Active
-                                            </span>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </>
-                )}
             </div>
         </div>
+        </>
     );
 }

@@ -2,8 +2,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Info, BarChart3, Menu, X, User, LogOut, MessageSquarePlus, Trash2, Edit2, Check } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { LayoutDashboard, BarChart3, Menu, X, User, LogOut, MessageSquarePlus, Trash2, Edit2, Check } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
 
 interface Modal {
     _id: string;
@@ -72,7 +72,7 @@ export default function SideMenu({
     const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
     const [editTitle, setEditTitle] = useState("");
     const router = useRouter();
-
+    const pathname = usePathname();
     useEffect(() => {
         // Fetch modals when menu is opened
         if (openHamburger) {
@@ -177,7 +177,7 @@ export default function SideMenu({
         <>
             {/* Hamburger Button */}
             <button
-                className="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 transition"
+                className="p-2 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 transition cursor-pointer"
                 onClick={() => setOpenHamburger(!openHamburger)}
             >
                 {openHamburger ? (
@@ -192,7 +192,7 @@ export default function SideMenu({
                 className={`fixed top-0 right-0 h-full w-80 bg-white dark:bg-zinc-800 shadow-lg transform transition-transform duration-300 ease-in-out z-50 flex flex-col
           ${openHamburger ? "translate-x-0" : "translate-x-full"}`}
             >
-
+                 {pathname === '/dashboard' && (
                 <div className="flex-1 overflow-hidden flex flex-col">
                     {/* AI Modals Section */}
                     <div className="p-4 border-b border-gray-200 dark:border-zinc-700 flex-shrink-0">
@@ -386,16 +386,17 @@ export default function SideMenu({
                         )}
                     </div>
                 </div>
+                 )}
 
                 {/* Bottom Actions */}
                 <div className="p-2 border-t border-gray-200 dark:border-zinc-700 space-y-1 flex-shrink-0">
-                    <button
-                        onClick={navigateToProfile}
+                   <a
+                        href="/profile"
                         className="w-full flex items-center gap-1 text-left p-1 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200"
                     >
-                        <User className="h-3 w-3" />
+                        <User className="h-3 w-3 text-gray-800 dark:text-gray-100" />
                         Profile
-                    </button>                 
+                    </a>               
                     <a
                         href="/stats"
                         className="w-full flex items-center gap-1 text-left p-1 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200"
@@ -403,16 +404,23 @@ export default function SideMenu({
                         <BarChart3 className="h-3 w-3 text-gray-800 dark:text-gray-100" />
                         Stats
                     </a>
+                    <a
+                        href="/dashboard"
+                        className="w-full flex items-center gap-1 text-left p-1 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200"
+                    >
+                        <LayoutDashboard className="h-3 w-3 text-gray-800 dark:text-gray-100" />
+                        Dashboard
+                    </a>                
                     <button
                         onClick={() => setOpenHamburger(false)}
-                        className="w-full flex items-center gap-1 text-left p-1 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200"
+                        className="w-full flex items-center gap-1 text-left p-1 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200 cursor-pointer"
                     >
                         <X className="h-3 w-3 text-gray-800 dark:text-gray-100" />
                         Close
                     </button>
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-1 text-left p-1 rounded-md hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400"
+                        className="w-full flex items-center gap-1 text-left p-1 rounded-md hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 cursor-pointer"
                     >
                         <LogOut className="h-3 w-3" />
                         Logout

@@ -654,29 +654,6 @@ export default function ProviderStats() {
                         </>
                     )}
                 </button>
-                <button
-                    onClick={() => setIsLoginModalOpen(true)}
-                    className="h-10 px-4 sm:h-12 sm:px-8 bg-[#131111] text-white font-medium rounded-lg 
-                            transition-all duration-300 shadow-lg border border-gray-600 
-                            hover:shadow-xl hover:bg-[#1b191d] flex items-center justify-center gap-3 cursor-pointer"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="w-5 h-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M12 11c.828 0 1.5.672 1.5 1.5v3a1.5 1.5 0 01-3 0v-3c0-.828.672-1.5 1.5-1.5zm6-2V7a6 6 0 10-12 0v2m12 0H6a2 2 0 00-2 2v7a2 2 0 002 2h12a2 2 0 002-2v-7a2 2 0 00-2-2z"
-                        />
-                    </svg>
-
-                    <span>Login</span>
-                </button>
             </div>
         </div>
     );
