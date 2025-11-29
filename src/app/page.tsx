@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import Navbar from "./components/navbar";
-import ProviderStats from "./components/ProviderStats";
+import React, { useState } from "react";
+import Image from "next/image";
 
-export default function Home() {
+export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -31,74 +30,108 @@ export default function Home() {
             }
 
             setError(data?.error || "Invalid credentials");
-        } catch (err) {
+        } catch {
             setError("Network error");
         } finally {
             setLoading(false);
         }
     };
 
-return (
-    <div className="min-h-screen bg-[#131111] font-sans text-white flex items-center justify-center px-4">
-        
-        <main className="w-full max-w-md">
-            <section className="bg-white/5 p-8 rounded-2xl border border-white/10 shadow-lg backdrop-blur-sm">
-                
-                <h2 className="text-2xl font-semibold text-center mb-6">Sign in</h2>
+    return (
+        <div className="min-h-screen bg-[#131111] flex items-center justify-center p-4">
+            <div className="w-full max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 
+                bg-[#1a1818] border border-white/10 shadow-2xl rounded-xl overflow-hidden">
 
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    
-                    <div>
-                        <label className="text-sm text-gray-300">Email</label>
-                        <input
-                            required
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="mt-1 w-full rounded-lg border border-white/20 bg-[#0f0d0d] text-white p-3 outline-none focus:ring-2 focus:ring-white/20"
-                            placeholder="you@example.com"
-                        />
-                    </div>
+                {/* LEFT SIDE — LOGIN FORM */}
+                <div className="p-6 flex flex-col justify-center text-white">
 
-                    <div>
-                        <label className="text-sm text-gray-300">Password</label>
-                        <input
-                            required
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="mt-1 w-full rounded-lg border border-white/20 bg-[#0f0d0d] text-white p-3 outline-none focus:ring-2 focus:ring-white/20"
-                            placeholder="••••••••"
-                        />
-                    </div>
-
-                    {error && (
-                        <div className="text-red-400 text-sm text-center">
-                            {error}
+                    {/* Logo */}
+                    <div className="mb-6 flex justify-center sm:justify-start">
+                        <div className="w-40 bg-transparent rounded flex">
+                            <Image
+                                src="/logo/text-logo2.png"
+                                alt="Logo"
+                                priority
+                                width={240}
+                                height={80}
+                                className="object-contain"
+                            />
                         </div>
-                    )}
+                    </div>
 
-                    <div className="flex justify-between items-center pt-2">
+
+                    <h1 className="flex text-3xl font-bold text-white mb-2 justify-center sm:justify-start">Welcome Back</h1>
+                    <p className="text-gray-400 mb-8 text-center sm:text-left">
+                        Please sign in to access your dashboard.
+                    </p>
+
+
+                    {/* LOGIN FORM */}
+                    <form onSubmit={handleSubmit} className="space-y-6">
+
+                        {/* Email */}
+                        <div>
+                            <label className="text-sm text-gray-300">Email</label>
+                            <input
+                                required
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="mt-1 w-full rounded-lg border border-white/20 
+                                    bg-[#0f0d0d] text-white p-3 outline-none
+                                    focus:ring-2 focus:ring-white/20"
+                                placeholder="you@example.com"
+                            />
+                        </div>
+
+                        {/* Password */}
+                        <div>
+                            <label className="text-sm text-gray-300">Password</label>
+                            <input
+                                required
+                                type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="mt-1 w-full rounded-lg border border-white/20 
+                                    bg-[#0f0d0d] text-white p-3 outline-none
+                                    focus:ring-2 focus:ring-white/20"
+                                placeholder="••••••••"
+                            />
+                        </div>
+
+                        {error && (
+                            <div className="text-red-400 text-sm text-center">
+                                {error}
+                            </div>
+                        )}
+
+                        {/* Submit Button */}
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-5 py-2.5 bg-white text-black rounded-lg font-medium disabled:opacity-60"
+                            className="w-full py-3 bg-white text-black rounded-lg font-semibold 
+                                shadow-md transition hover:opacity-90 disabled:opacity-60 cursor-pointer"
                         >
-                            {loading ? "Signing in..." : "Sign in"}
+                            {loading ? "Signing in..." : "Sign In"}
                         </button>
+                    </form>
 
-                        <button
-                            type="button"
-                            onClick={() => { setEmail(""); setPassword(""); setError(null); }}
-                            className="px-4 py-2 bg-white/10 rounded-lg text-sm text-gray-300"
-                        >
-                            Clear
-                        </button>
-                    </div>
-                </form>
-            </section>
-        </main>
-    </div>
-);
+                    <p className="text-xs text-gray-500 text-center mt-6">
+                        Authorized users only.
+                    </p>
+                </div>
 
+                {/* RIGHT SIDE — IMAGE */}
+                <div className="hidden md:block bg-[#0d0c0c] relative">
+                    <Image
+                        src="/logo/logo.png"
+                        alt="Illustration"
+                        fill
+                        className="object-cover opacity-90"
+                        priority
+                    />
+                </div>
+            </div>
+        </div>
+    );
 }
