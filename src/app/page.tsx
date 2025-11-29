@@ -49,7 +49,7 @@ export default function LoginPage() {
                     <div className="mb-6 flex justify-center sm:justify-start">
                         <div className="w-40 bg-transparent rounded flex">
                             <Image
-                                src="/logo/text-logo2.png"
+                                src="/logo/text-logo.png"
                                 alt="Logo"
                                 priority
                                 width={240}
