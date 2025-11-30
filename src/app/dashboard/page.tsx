@@ -59,12 +59,54 @@ export default function DashboardPage() {
     const [webSearchEnabled, setWebSearchEnabled] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const chatRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-
+    const [isExpanded, setIsExpanded] = useState(false);
     // Chat session management
     const [sessions, setSessions] = useState<ChatSession[]>([]);
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
-    // All hamburger state and logic has been removed from here
+    // CSS for the black scrollbar
+    const scrollbarStyles = `
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #000000;
+            border-radius: 10px;
+        }
+        /* Firefox fallback */
+        .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #000000 transparent;
+        }
+    `;
+
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    const autoGrow = () => {
+        const el = textareaRef.current;
+        if (!el) return;
+
+        // Reset height to auto to correctly calculate scrollHeight
+        el.style.height = "auto";
+        
+        // Define max height (approx 3 lines + padding is roughly 90-100px)
+        const maxHeight = 100; 
+
+        if (el.scrollHeight > maxHeight) {
+            // If content is taller than max, cap it and show scrollbar
+            el.style.height = `${maxHeight}px`;
+            el.style.overflowY = "auto";
+        } else {
+            // Otherwise, let it grow and hide scrollbar
+            el.style.height = `${el.scrollHeight}px`;
+            el.style.overflowY = "hidden";
+        }
+
+        setIsExpanded(el.scrollHeight > el.clientHeight);
+    };
 
     useEffect(() => {
         const initializeDashboard = async () => {
@@ -338,6 +380,13 @@ export default function DashboardPage() {
         }
         setIsSending(true);
 
+        // Reset textarea height after sending
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.overflowY = 'hidden';
+            setIsExpanded(false);
+        }
+
         setTimeout(() => {
             modals.forEach((modal) => scrollToBottom(modal._id));
         }, 100);
@@ -502,8 +551,6 @@ export default function DashboardPage() {
         });
     };
 
-    // toggleModalStatus, navigateToProfile, and handleLogout have been REMOVED
-
     // Get provider logo based on provider name
     const getProviderLogo = (provider: string) => {
         const providerLower = provider.toLowerCase();
@@ -549,7 +596,6 @@ export default function DashboardPage() {
                         ) : modals.length > 0 ? (
                             modals.map((modal) => {
                                 // Calculate dynamic width based on number of modals
-                                // If modals can fit without scrolling, expand them to fill the screen
                                 const getModalWidthClass = () => {
                                     const modalCount = modals.length;
                                     if (modalCount === 1) return "w-full";
@@ -750,19 +796,52 @@ export default function DashboardPage() {
                             <ImagePlus className="h-5 w-5 sm:h-6 sm:w-6" />
                         </button>
 
-                        <input
-                            className="flex-1 min-w-0 py-2 px-4 sm:py-3 sm:px-6 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            type="text"
+                        <style>{scrollbarStyles}</style>
+
+                        <textarea
+                            ref={textareaRef}
+                            className={`flex-1 min-w-0 py-2 px-4 sm:py-3 sm:px-6 
+                                border border-gray-300 dark:border-gray-600 
+                                bg-white dark:bg-zinc-800 
+                                text-gray-900 dark:text-gray-100 
+                                text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 
+                                transition-all duration-150 custom-scrollbar
+                                ${isExpanded ? "rounded-xl" : "rounded-full"}`}
+
                             placeholder={
                                 modals.length > 0
                                     ? `Send to ${modals.length} AI modal${modals.length > 1 ? "s" : ""}...`
                                     : "No active modals..."
                             }
+
                             value={inputValue}
-                            onChange={(e) => setInputValue(e.target.value)}
-                            onKeyPress={handleKeyPress}
+                            onChange={(e) => {
+                                setInputValue(e.target.value);
+                                autoGrow();
+                            }}
+
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleKeyPress(e as any);
+                                }
+                                if (e.key === "Enter" && e.shiftKey) {
+                                    e.preventDefault();
+                                    setInputValue((prev) => prev + "\n");
+                                    // Trigger autoGrow after state update
+                                    setTimeout(autoGrow, 0);
+                                }
+                            }}
+
                             disabled={isSending || modals.length === 0}
+                            rows={1}
+                            style={{ 
+                                maxHeight: "100px", 
+                                overflowY: "hidden",
+                                resize: "none"
+                            }}
                         />
+
                         <button
                             onClick={sendToAllModals}
                             disabled={isSending || !inputValue.trim() || modals.length === 0}

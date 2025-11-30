@@ -190,206 +190,11 @@ export default function SideMenu({
             {/* Side Drawer (Right) */}
             <div
                 className={`fixed top-0 right-0 h-full w-80 bg-white dark:bg-zinc-800 shadow-lg transform transition-transform duration-300 ease-in-out z-50 flex flex-col
-          ${openHamburger ? "translate-x-0" : "translate-x-full"}`}
+                ${openHamburger ? "translate-x-0" : "translate-x-full"}`}
             >
-                 {pathname === '/dashboard' && (
-                <div className="flex-1 overflow-hidden flex flex-col">
-                    {/* AI Modals Section */}
-                    <div className="p-4 border-b border-gray-200 dark:border-zinc-700 flex-shrink-0">
-                        {loading ? (
-                            <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
-                                Loading modals...
-                            </div>
-                        ) : (
-                            <>
-                                <div className="space-y-1 max-h-70 overflow-y-auto pr-2 sidebar-scroll">
-                                    {/* All Models Toggle */}
-                                    <div
-                                        className={`p-2 rounded-lg border-2 transition-all ${modals.length > 0 && modals.every(m => m.status === 'active')
-                                            ? "border-black bg-[#131111]"
-                                            : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900"
-                                            }`}
-                                    >
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
-                                                        All Models
-                                                    </div>
-                                                    {modals.length > 0 && modals.every(m => m.status === 'active') && (
-                                                        <span className="flex-shrink-0 h-2 w-2 rounded-full bg-green-500"></span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <AllToggleButton modals={modals} onBulkUpdate={async (newStatus: string) => {
-                                                // Call backend to set all statuses
-                                                try {
-                                                    const res = await fetch('/api/modals', {
-                                                        method: 'PATCH',
-                                                        headers: { 'Content-Type': 'application/json' },
-                                                        body: JSON.stringify({ action: 'setAllStatus', status: newStatus })
-                                                    });
-                                                    const data = await res.json();
-                                                    if (data.success) {
-                                                        // Refresh modals list
-                                                        fetchModals();
-                                                        if (onModalUpdate) onModalUpdate();
-                                                    } else {
-                                                        alert('Failed to update all models: ' + (data.error || 'unknown'));
-                                                    }
-                                                } catch (err) {
-                                                    console.error('Bulk update failed', err);
-                                                    alert('Bulk update failed');
-                                                }
-                                            }} />
-                                        </div>
-                                    </div>
-                                    {modals.map((modal) => (
-                                        <div
-                                            key={modal._id}
-                                            className={`p-2 rounded-lg border-2 transition-all ${modal.status === "active"
-                                                ? "border-black bg-[#131111]"
-                                                : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900"
-                                                }`}
-                                        >
-                                            <div className="flex items-start justify-between gap-2">
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
-                                                            {modal.name} ({modal.provider})
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <button
-                                                    onClick={() => toggleModalStatus(modal._id, modal.status)}
-                                                    className={`flex-shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${modal.status === "active"
-                                                        ? "bg-[#131111] border-white border"
-                                                        : "bg-zinc-400"
-                                                        }`}
-                                                    title={modal.status === "active" ? "Deactivate" : "Activate"}
-                                                >
-                                                    <span
-                                                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${modal.status === "active" ? "translate-x-6" : "translate-x-1"
-                                                            }`}
-                                                    />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </>
-                        )}
-                    </div>
-
-                    {/* Chat Sessions Section */}
-                    <div className="p-4 flex-1 overflow-hidden flex flex-col">
-                        <div className="flex items-center justify-between mb-3 flex-shrink-0">
-                            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                Chat History {sessions.length > 0 && (
-                                    <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">
-                                        ({sessions.length})
-                                    </span>
-                                )}
-                            </h3>
-                            <button
-                                onClick={() => {
-                                    onCreateSession?.();
-                                }}
-                                className="flex items-center gap-1 px-2 py-1 rounded-md bg-[#131111] text-white text-xs font-medium transition-colors cursor-pointer"
-                                title="New Chat"
-                            >
-                                +
-                            </button>
-                        </div>
-
-                        {sessions.length > 0 ? (
-                            <div className="space-y-1 flex-1 overflow-y-auto pr-2 sidebar-scroll">
-                                {sessions.map((session) => {
-                                    const sessionId = session._id || session.id || '';
-                                    return (
-                                        <div
-                                            key={sessionId}
-                                            className={`group relative p-2 rounded-md cursor-pointer transition-colors ${activeSessionId === sessionId
-                                                ? "bg-[#131111] border border-black"
-                                                : "hover:bg-gray-100 dark:hover:bg-zinc-700"
-                                                }`}
-                                        >
-                                            {editingSessionId === sessionId ? (
-                                                <div className="flex items-center gap-1">
-                                                    <input
-                                                        type="text"
-                                                        value={editTitle}
-                                                        onChange={(e) => setEditTitle(e.target.value)}
-                                                        onKeyPress={(e) => {
-                                                            if (e.key === "Enter") saveSessionTitle(sessionId);
-                                                            if (e.key === "Escape") setEditingSessionId(null);
-                                                        }}
-                                                        className="flex-1 px-2 py-1 text-xs bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                                        autoFocus
-                                                    />
-                                                    <button
-                                                        onClick={() => saveSessionTitle(sessionId)}
-                                                        className="p-1 rounded hover:bg-green-100 dark:hover:bg-green-900/20 text-green-600"
-                                                    >
-                                                        <Check className="h-3 w-3" />
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <div
-                                                        onClick={() => onSwitchSession?.(sessionId)}
-                                                        className="flex-1"
-                                                    >
-                                                        <div className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                                                            {session.title}
-                                                        </div>
-                                                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                                                            {formatDate(session.lastMessageAt)}
-                                                        </div>
-                                                    </div>
-                                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                startEditingSession(sessionId, session.title);
-                                                            }}
-                                                            className="p-1 rounded hover:bg-blue-100 dark:hover:bg-blue-900/20 text-blue-600"
-                                                            title="Rename"
-                                                        >
-                                                            <Edit2 className="h-3 w-3 text-gray-100 cursor-pointer" />
-                                                        </button>
-                                                        {sessions.length > 1 && (
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    if (confirm("Delete this chat session?")) {
-                                                                        onDeleteSession?.(sessionId);
-                                                                    }
-                                                                }}
-                                                                className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 cursor-pointer"
-                                                                title="Delete"
-                                                            >
-                                                                <Trash2 className="h-3 w-3" />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                            <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
-                                No chat sessions yet
-                            </div>
-                        )}
-                    </div>
-                </div>
-                 )}
-
-                {/* Bottom Actions */}
-                <div className="p-2 border-t border-gray-200 dark:border-zinc-700 space-y-1 flex-shrink-0">
+                                    
+                {/* Default Actions */}
+                <div className="p-2 border-b border-gray-200 dark:border-zinc-700 space-y-1 flex-shrink-0">
                    <a
                         href="/profile"
                         className="w-full flex items-center gap-1 text-left p-1 rounded-md hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-gray-200"
@@ -426,6 +231,201 @@ export default function SideMenu({
                         Logout
                     </button>
                 </div>
+                {pathname === '/dashboard' && (
+                    <div className="flex-1 overflow-hidden flex flex-col">
+                        {/* AI Modals Section */}
+                        <div className="p-4 border-b border-gray-200 dark:border-zinc-700 flex-shrink-0">
+                            {loading ? (
+                                <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                                    Loading modals...
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="space-y-1 max-h-70 overflow-y-auto pr-2 sidebar-scroll">
+                                        {/* All Models Toggle */}
+                                        <div
+                                            className={`p-2 rounded-lg border-2 transition-all ${modals.length > 0 && modals.every(m => m.status === 'active')
+                                                ? "border-black bg-[#131111]"
+                                                : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900"
+                                                }`}
+                                        >
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
+                                                            All Models
+                                                        </div>
+                                                        {modals.length > 0 && modals.every(m => m.status === 'active') && (
+                                                            <span className="flex-shrink-0 h-2 w-2 rounded-full bg-green-500"></span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <AllToggleButton modals={modals} onBulkUpdate={async (newStatus: string) => {
+                                                    // Call backend to set all statuses
+                                                    try {
+                                                        const res = await fetch('/api/modals', {
+                                                            method: 'PATCH',
+                                                            headers: { 'Content-Type': 'application/json' },
+                                                            body: JSON.stringify({ action: 'setAllStatus', status: newStatus })
+                                                        });
+                                                        const data = await res.json();
+                                                        if (data.success) {
+                                                            // Refresh modals list
+                                                            fetchModals();
+                                                            if (onModalUpdate) onModalUpdate();
+                                                        } else {
+                                                            alert('Failed to update all models: ' + (data.error || 'unknown'));
+                                                        }
+                                                    } catch (err) {
+                                                        console.error('Bulk update failed', err);
+                                                        alert('Bulk update failed');
+                                                    }
+                                                }} />
+                                            </div>
+                                        </div>
+                                        {modals.map((modal) => (
+                                            <div
+                                                key={modal._id}
+                                                className={`p-2 rounded-lg border-2 transition-all ${modal.status === "active"
+                                                    ? "border-black bg-[#131111]"
+                                                    : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900"
+                                                    }`}
+                                            >
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
+                                                                {modal.name} ({modal.provider})
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => toggleModalStatus(modal._id, modal.status)}
+                                                        className={`flex-shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${modal.status === "active"
+                                                            ? "bg-[#131111] border-white border"
+                                                            : "bg-zinc-400"
+                                                            }`}
+                                                        title={modal.status === "active" ? "Deactivate" : "Activate"}
+                                                    >
+                                                        <span
+                                                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${modal.status === "active" ? "translate-x-6" : "translate-x-1"
+                                                                }`}
+                                                        />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Chat Sessions Section */}
+                        <div className="p-4 flex-1 overflow-hidden flex flex-col">
+                            <div className="flex items-center justify-between mb-3 flex-shrink-0">
+                                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                    Chat History {sessions.length > 0 && (
+                                        <span className="ml-1 text-xs text-gray-500 dark:text-gray-400">
+                                            ({sessions.length})
+                                        </span>
+                                    )}
+                                </h3>
+                                <button
+                                    onClick={() => {
+                                        onCreateSession?.();
+                                    }}
+                                    className="flex items-center gap-1 px-2 py-1 rounded-md bg-[#131111] text-white text-xs font-medium transition-colors cursor-pointer"
+                                    title="New Chat"
+                                >
+                                    +
+                                </button>
+                            </div>
+
+                            {sessions.length > 0 ? (
+                                <div className="space-y-1 flex-1 overflow-y-auto pr-2 sidebar-scroll">
+                                    {sessions.map((session) => {
+                                        const sessionId = session._id || session.id || '';
+                                        return (
+                                            <div
+                                                key={sessionId}
+                                                className={`group relative p-2 rounded-md cursor-pointer transition-colors ${activeSessionId === sessionId
+                                                    ? "bg-[#131111] border border-black"
+                                                    : "hover:bg-gray-100 dark:hover:bg-zinc-700"
+                                                    }`}
+                                            >
+                                                {editingSessionId === sessionId ? (
+                                                    <div className="flex items-center gap-1">
+                                                        <input
+                                                            type="text"
+                                                            value={editTitle}
+                                                            onChange={(e) => setEditTitle(e.target.value)}
+                                                            onKeyPress={(e) => {
+                                                                if (e.key === "Enter") saveSessionTitle(sessionId);
+                                                                if (e.key === "Escape") setEditingSessionId(null);
+                                                            }}
+                                                            className="flex-1 px-2 py-1 text-xs bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-600 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                            autoFocus
+                                                        />
+                                                        <button
+                                                            onClick={() => saveSessionTitle(sessionId)}
+                                                            className="p-1 rounded hover:bg-green-100 dark:hover:bg-green-900/20 text-green-600"
+                                                        >
+                                                            <Check className="h-3 w-3" />
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <div
+                                                            onClick={() => onSwitchSession?.(sessionId)}
+                                                            className="flex-1"
+                                                        >
+                                                            <div className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
+                                                                {session.title}
+                                                            </div>
+                                                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                                                                {formatDate(session.lastMessageAt)}
+                                                            </div>
+                                                        </div>
+                                                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    startEditingSession(sessionId, session.title);
+                                                                }}
+                                                                className="p-1 rounded hover:bg-blue-100 dark:hover:bg-blue-900/20 text-blue-600"
+                                                                title="Rename"
+                                                            >
+                                                                <Edit2 className="h-3 w-3 text-gray-100 cursor-pointer" />
+                                                            </button>
+                                                            {sessions.length > 1 && (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        if (confirm("Delete this chat session?")) {
+                                                                            onDeleteSession?.(sessionId);
+                                                                        }
+                                                                    }}
+                                                                    className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 cursor-pointer"
+                                                                    title="Delete"
+                                                                >
+                                                                    <Trash2 className="h-3 w-3" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                                    No chat sessions yet
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                 )}
             </div>
 
             {/* Overlay */}
