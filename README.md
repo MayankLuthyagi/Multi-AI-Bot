@@ -56,6 +56,8 @@ TRAVILY_API_KEY=your_travily_api_key
 # Add other provider API keys as needed
 ```
 
+Make sure you put all required provider API keys (for example `TRAVILY_API_KEY`, OpenAI/Anthropic keys, etc.) and `MONGODB_URI` into your `.env` file before running the app or any setup scripts.
+
 ## Managing Providers
 
 You can add and configure AI providers directly through the web interface:
@@ -105,6 +107,22 @@ We provide a helper script:
 node scripts/seed-user.js --name "Mayank" --email "mayankluthyagico@gmail.com" --password "your-password-here"
 ```
 
+Before running the seeding script, ensure you target the `chatbot` database (the application expects this database). You can either create the `chatbot` database manually in your MongoDB GUI/CLI, or run the seeding script with the `--db chatbot` flag — MongoDB will create the database/collection on insert if it doesn't already exist.
+
+Examples:
+
+- Bash/macOS/Linux:
+```bash
+MONGODB_URI='your-uri' node scripts/seed-user.js --name "Mayank" --email "mayank@example.com" --password "secret" --db chatbot
+```
+
+- PowerShell (Windows):
+```powershell
+$env:MONGODB_URI = 'your-uri'; node .\scripts\seed-user.js --name "Mayank" --email "mayank@example.com" --password "secret" --db chatbot
+```
+
+This will insert the seeded user into the `chatbot` database (the script inserts into the `admin` collection by default in this repository).
+
 ## Development Notes
 
 - API routes are located in `src/app/api/`
@@ -134,7 +152,3 @@ Keep pull requests focused and include tests when appropriate.
 ## License
 
 This project is currently unlicensed. If you plan to open-source it, please add a LICENSE file.
-
----
-
-This version maintains all your technical content while making it more engaging and readable. The tone is professional but approachable, with better organization and flow.

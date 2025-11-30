@@ -62,7 +62,7 @@ async function main() {
         await client.connect();
 
         const db = dbName ? client.db(dbName) : client.db();
-        const users = db.collection('users');
+        const users = db.collection('admin');
 
         const doc = {
             name,
