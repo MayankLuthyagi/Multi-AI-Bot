@@ -2,7 +2,7 @@
 
 Omni is a multi-provider AI chatbot platform built with **Next.js** and **TypeScript**. It offers a modular backend with API routes and a React-based frontend for interacting with multiple AI providers, managing chat sessions, tracking token usage & costs, viewing provider statistics, and fetching coin prices/history.
 
-## ⭐ Features
+## Features
 
 * **Multi-provider chat integration** via extensible provider adapters
 * **User authentication** and session management
@@ -14,7 +14,7 @@ Omni is a multi-provider AI chatbot platform built with **Next.js** and **TypeSc
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 * **Next.js (App Router)**
 * **TypeScript**
@@ -24,7 +24,7 @@ Omni is a multi-provider AI chatbot platform built with **Next.js** and **TypeSc
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 src/
@@ -41,7 +41,7 @@ src/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -59,7 +59,7 @@ Open: **[http://localhost:3000](http://localhost:3000)**
 
 ---
 
-## 🔧 Environment Variables
+## Environment Variables
 
 After running `npm install`, create a `.env` file (optionally copy from `.env.example`) and include:
 
@@ -70,7 +70,7 @@ TRAVILY_API_KEY=your_travily_api_key_here
 ```
 
 ---
-## 🔐 Adding API keys via the web UI (/profile)
+## Adding API keys via the web UI (/profile)
 
 You can add or update provider API keys directly from the running app instead of putting every provider key into your `.env`.
 
@@ -105,7 +105,7 @@ Note: Some integrations or helper services may still require environment variabl
 
 ---
 
-## 🧠 Provider Modals (model entries)
+## Provider Modals (model entries)
 
 When you save a provider from the `/profile` UI, the app will automatically create a set of "modals" (model entries) for that provider based on the provider templates defined in the code (`src/lib/models/Modal.ts`). Each modal represents a specific model offered by the provider (for example `gpt-5-mini` or `claude-opus-4.5`) and includes pricing metadata used for cost tracking.
 
@@ -120,7 +120,7 @@ If you need to inspect or adjust modal data directly, see the modal collection n
 
 ---
 
-## 🖼️ Screenshots (Profile UI)
+## Screenshots (Profile UI)
 
 Here are example screenshots of the Profile page showing how to add providers and edit provider settings. These are placeholder images — replace them with real screenshots in `public/screenshots/` if you prefer.
 
@@ -129,7 +129,7 @@ Here are example screenshots of the Profile page showing how to add providers an
 ![Profile — Edit Provider modal](/screenshots/profile-2.svg)
 
 
-## 👤 Adding a Test User (Manual Seed)
+## Adding a Test User (Manual Seed)
 
 The app uses **MongoDB** for user management.
 
@@ -158,7 +158,7 @@ Copy the output into the `password` field.
 
 ---
 
-## ⚙️ Automated seed script
+## Automated seed script
 
 There is a small helper script that creates (or updates) a user programmatically and hashes the password for you:
 
@@ -184,7 +184,7 @@ The script reads `MONGODB_URI` from your environment or `.env` and will insert t
 
 ---
 
-## 🧩 Development Notes
+## Development Notes
 
 * Modular API routes live in: `src/app/api/`
 * Frontend pages follow the app-router structure (`layout.tsx`, `page.tsx`)
@@ -193,7 +193,7 @@ The script reads `MONGODB_URI` from your environment or `.env` and will insert t
 
 ---
 
-## 🌐 Deployment
+## Deployment
 
 Deploy on **Vercel** or any Node.js-friendly platform.
 Ensure you set required environment variables:
@@ -204,7 +204,7 @@ Ensure you set required environment variables:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome!
 Submit issues or PRs for:
@@ -218,7 +218,7 @@ Please keep PRs focused and include tests when meaningful.
 
 ---
 
-## 📜 License
+## License
 
 This project currently does **not** include a license.
 Add a `LICENSE` file if you want to open-source it.
