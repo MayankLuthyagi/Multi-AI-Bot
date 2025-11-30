@@ -64,10 +64,9 @@ TRAVILY_API_KEY=your_travily_api_key
    Add `MONGODB_URI` and all required provider API keys (OpenAI, Anthropic, Travily, etc.).
 
 2. **Set up the database**
-   Make sure a database named `chatbot` exists. MongoDB will auto-create it when inserting data.
+   Ensure a database named `chatbot` exists. MongoDB will auto-create it when data is inserted.
 
 3. **Seed an admin user (optional)**
-   Use the seeding script to create an admin account:
 
    ```bash
    MONGODB_URI='your-uri' node scripts/seed-user.js --name "Mayank" --email "mayank@example.com" --password "secret" --db chatbot
@@ -149,5 +148,34 @@ $env:MONGODB_URI = 'your-uri'; node .\scripts\seed-user.js --name "Mayank" --ema
 1. Set required environment variables
 2. Configure MongoDB
 3. Add all provider API keys
+
+## **Removing Test Credentials From Frontend**
+
+If you used test credentials during development, you can remove the visible block before deployment.
+
+1. Open `src/app/page.tsx`.
+2. Find the test credentials block:
+
+```tsx
+{/* Test credentials + quick-fill */}
+<div className="mt-3 text-sm text-gray-400 text-center sm:text-left">
+   <div className="mb-2">Test credentials for quick sign in:</div>
+   <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 gap-2 justify-center sm:justify-start">
+      <div className="text-xs text-gray-300">Email: <span className="font-mono text-white">admin@example.com</span></div>
+      <div className="text-xs text-gray-300">Password: <span className="font-mono text-white">password</span></div>
+      <button
+         type="button"
+         onClick={() => { setEmail("admin@example.com"); setPassword("password"); }}
+         className="mt-1 sm:mt-0 px-3 py-2 bg-white text-black rounded-lg font-semibold shadow-sm hover:opacity-90"
+      >
+         Fill test credentials
+      </button>
+   </div>
+</div>
+```
+
+3. Remove or comment out this entire block.
+
+This ensures test credentials are not included in production builds.
 
 Thank you!

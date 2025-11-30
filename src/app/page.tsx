@@ -116,9 +116,15 @@ export default function LoginPage() {
                         </button>
                     </form>
 
-                    <p className="text-xs text-gray-500 text-center mt-6">
-                        Authorized users only.
-                    </p>
+
+                    {/* Test credentials + quick-fill */}
+                    <div className="mt-4 text-sm text-gray-400 text-center sm:text-left">
+                        <div className="mb-2">Test credentials for quick sign in:</div>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 gap-2 justify-center sm:justify-start">
+                            <div className="text-xs text-gray-300">Email: <span className="font-mono text-white">admin@example.com</span></div>
+                            <div className="text-xs text-gray-300">Password: <span className="font-mono text-white">password</span></div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* RIGHT SIDE — IMAGE */}
