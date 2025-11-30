@@ -1,54 +1,56 @@
-# Omni
+# **Omni**
 
 Omni is a versatile AI chatbot platform that connects you with multiple AI providers through a clean, modular interface. Built with **Next.js** and **TypeScript**, it offers a seamless experience for managing AI interactions, tracking costs, and analyzing usage statistics.
 
-## Features
+## **Features**
 
-- **Multi-provider support** – Connect with OpenAI, Anthropic, Google, and more
-- **Persistent chat sessions** – Your conversation history stays intact
-- **Cost tracking** – Monitor token usage and provider expenses
-- **Provider analytics** – View detailed statistics about your AI usage
-- **Coin price data** – Access cryptocurrency market information
-- **Modular architecture** – Easy to extend with new features or providers
+* **Multi-provider support** – Connect with OpenAI, Anthropic, Google, and more
+* **Persistent chat sessions** – Your conversation history stays intact
+* **Cost tracking** – Monitor token usage and provider expenses
+* **Provider analytics** – View detailed statistics about your AI usage
+* **Coin price data** – Access cryptocurrency market information
+* **Modular architecture** – Easily extend with new features or providers
 
-## Tech Stack
+## **Tech Stack**
 
-- **Frontend**: Next.js (App Router), TypeScript, React
-- **Styling**: PostCSS
-- **Database**: MongoDB
-- **Tooling**: ESLint
+* **Frontend**: Next.js (App Router), TypeScript, React
+* **Styling**: PostCSS
+* **Database**: MongoDB
+* **Tooling**: ESLint
 
-## Project Structure
+## **Project Structure**
 
 ```
 src/
-├─ app/                  # Next.js application routes
-│   ├─ api/              # Backend API endpoints
-│   ├─ dashboard/        # Main dashboard interface
-│   ├─ profile/          # User profile management
-│   └─ stats/            # Analytics and usage reports
-├─ components/          # Reusable UI components
-├─ lib/                  # Core utilities and business logic
-└─ public/               # Static assets
+├─ app/
+│   ├─ api/
+│   ├─ dashboard/
+│   ├─ profile/
+│   └─ stats/
+├─ components/
+├─ lib/
+└─ public/
 ```
 
-## Getting Started
+## **Getting Started**
 
-### Prerequisites
-- Node.js 18+
-- npm
+### **Prerequisites**
 
-### Installation
+* Node.js 18+
+* npm
+
+### **Installation**
+
 ```bash
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open `http://localhost:3000` in your browser.
 
-## Configuration
+## **Configuration**
 
-Create a `.env` file based on `.env.example` and add your credentials:
+Create a `.env` file based on `.env.example`:
 
 ```env
 MONGODB_URI=your_mongodb_connection_string
@@ -56,38 +58,60 @@ TRAVILY_API_KEY=your_travily_api_key
 # Add other provider API keys as needed
 ```
 
-Make sure you put all required provider API keys (for example `TRAVILY_API_KEY`, OpenAI/Anthropic keys, etc.) and `MONGODB_URI` into your `.env` file before running the app or any setup scripts.
+## **How to Start**
 
-## Managing Providers
+1. **Create your `.env` file**
+   Add `MONGODB_URI` and all required provider API keys (OpenAI, Anthropic, Travily, etc.).
 
-You can add and configure AI providers directly through the web interface:
+2. **Set up the database**
+   Make sure a database named `chatbot` exists. MongoDB will auto-create it when inserting data.
 
-1. Navigate to `/profile`
-2. Select a provider from the dropdown
-3. Enter your API key and optional credit amount
-4. Click "Save Provider"
+3. **Seed an admin user (optional)**
+   Use the seeding script to create an admin account:
 
-The system will automatically create model entries for the selected provider.
+   ```bash
+   MONGODB_URI='your-uri' node scripts/seed-user.js --name "Mayank" --email "mayank@example.com" --password "secret" --db chatbot
+   ```
 
-## Screenshots
+4. **Install dependencies**
 
-Here's what the interface looks like:
+   ```bash
+   npm install
+   ```
 
-- **Profile Page**: ![Profile UI](public/page/profile.png)
-- **Dashboard**: ![Dashboard UI](public/page/dashboard.png)
-- **Side Menu**: ![Side Menu UI](public/page/sidemenu.png)
-- **Statistics**: ![Stats UI](public/page/stats.png)
+5. **Run the development server**
 
-*(Note: These are placeholder images - replace with your actual screenshots)*
+   ```bash
+   npm run dev
+   ```
 
-## Database Setup
+6. **Open the app**
+   Visit `http://localhost:3000`.
 
-### Manual User Creation
+## **Managing Providers**
 
-To add a test user:
+1. Go to `/profile`
+2. Select a provider
+3. Enter the API key and optional credit
+4. Save the provider
 
-1. Connect to your MongoDB instance
-2. Insert a user document with a bcrypt-hashed password:
+## **Screenshots**
+
+* **Profile Page**
+  ![Profile UI](public/page/profile.png)
+
+* **Dashboard**
+  ![Dashboard UI](public/page/dashboard.png)
+
+* **Side Menu**
+  ![Side Menu UI](public/page/sidemenu.png)
+
+* **Statistics**
+  ![Stats UI](public/page/stats.png)
+
+## **Database Setup**
+
+### **Manual User Creation**
 
 ```javascript
 db.users.insertOne({
@@ -99,56 +123,31 @@ db.users.insertOne({
 })
 ```
 
-### Automated User Seeding
+### **Seeding an Admin User**
 
-We provide a helper script:
+#### macOS / Linux / Git Bash
 
-```bash
-node scripts/seed-user.js --name "Mayank" --email "mayankluthyagico@gmail.com" --password "your-password-here"
-```
-
-Before running the seeding script, ensure you target the `chatbot` database (the application expects this database). You can either create the `chatbot` database manually in your MongoDB GUI/CLI, or run the seeding script with the `--db chatbot` flag — MongoDB will create the database/collection on insert if it doesn't already exist.
-
-Examples:
-
-- Bash/macOS/Linux:
 ```bash
 MONGODB_URI='your-uri' node scripts/seed-user.js --name "Mayank" --email "mayank@example.com" --password "secret" --db chatbot
 ```
 
-- PowerShell (Windows):
+#### PowerShell (Windows)
+
 ```powershell
 $env:MONGODB_URI = 'your-uri'; node .\scripts\seed-user.js --name "Mayank" --email "mayank@example.com" --password "secret" --db chatbot
 ```
 
-This will insert the seeded user into the `chatbot` database (the script inserts into the `admin` collection by default in this repository).
+## **Development Notes**
 
-## Development Notes
+* API routes are inside `src/app/api/`
+* Pages follow Next.js App Router structure
+* Provider integrations are modular
+* Core logic lives in `lib/`
 
-- API routes are located in `src/app/api/`
-- Frontend pages follow Next.js App Router conventions
-- Provider integrations are designed for easy extension
-- Core business logic lives in the `lib/` directory
+## **Deployment**
 
-## Deployment
+1. Set required environment variables
+2. Configure MongoDB
+3. Add all provider API keys
 
-Omni can be deployed on Vercel or any Node.js-compatible platform. Make sure to:
-
-1. Set all required environment variables
-2. Configure your MongoDB connection
-3. Add any necessary provider API keys
-
-## Contributing
-
-We welcome contributions! Please submit:
-
-- Bug reports
-- New provider integrations
-- Performance improvements
-- UI/UX enhancements
-
-Keep pull requests focused and include tests when appropriate.
-
-## License
-
-This project is currently unlicensed. If you plan to open-source it, please add a LICENSE file.
+Thank you!
