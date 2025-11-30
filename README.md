@@ -124,10 +124,10 @@ If you need to inspect or adjust modal data directly, see the modal collection n
 
 Here are example screenshots showing the Profile, Dashboard, Side menu, and Stats pages. These are placeholder images — replace them with real screenshots in `public/page/` or `public/screenshots/` if you prefer.
 
-- Profile: ![/page/profile.png](/page/profile.png)
-- Dashboard: ![/page/dashboard.png](/page/dashboard.png)
-- Side menu: ![/page/sidemenu.png](/page/sidemenu.png)
-- Stats: ![/page/stats.png](/page/stats.png)
+- Profile: ![/page/profile.png](public/page/profile.png)
+- Stats: ![/page/stats.png](public/page/stats.png)
+- Dashboard: ![/page/dashboard.png](public/page/dashboard.png)
+- Side menu: ![/page/sidemenu.png](public/page/sidemenu.png)
 
 
 ## Adding a Test User (Manual Seed)
