@@ -122,11 +122,12 @@ If you need to inspect or adjust modal data directly, see the modal collection n
 
 ## Screenshots (Profile UI)
 
-Here are example screenshots of the Profile page showing how to add providers and edit provider settings. These are placeholder images — replace them with real screenshots in `public/screenshots/` if you prefer.
+Here are example screenshots showing the Profile, Dashboard, Side menu, and Stats pages. These are placeholder images — replace them with real screenshots in `public/page/` or `public/screenshots/` if you prefer.
 
-![Profile — Providers tab](/screenshots/profile-1.svg)
-
-![Profile — Edit Provider modal](/screenshots/profile-2.svg)
+- Profile: ![/page/profile.png](/page/profile.png)
+- Dashboard: ![/page/dashboard.png](/page/dashboard.png)
+- Side menu: ![/page/sidemenu.png](/page/sidemenu.png)
+- Stats: ![/page/stats.png](/page/stats.png)
 
 
 ## Adding a Test User (Manual Seed)
