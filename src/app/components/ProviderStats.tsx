@@ -46,6 +46,7 @@ export default function ProviderStats() {
     const [recalculating, setRecalculating] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+    
     useEffect(() => {
         setIsMounted(true);
         fetchStats();
@@ -96,24 +97,20 @@ export default function ProviderStats() {
     };
 
     const calculateRemainingCredit = (provider: ProviderStat) => {
-        // Credit is already deducted in the backend, so just return the current credit value
         return provider.credit;
     };
 
     const calculateInitialCredit = (provider: ProviderStat) => {
-        // Initial credit = current credit + total cost spent
         return provider.credit + provider.totalCost;
     };
 
     const calculateTotalCredit = () => {
         if (!stats) return 0;
-        // Sum all provider credits (remaining)
         return stats.byProvider.reduce((sum, provider) => sum + provider.credit, 0);
     };
 
     const calculateTotalInitialCredit = () => {
         if (!stats) return 0;
-        // Sum all provider initial credits (remaining + spent)
         return stats.byProvider.reduce((sum, provider) => sum + provider.credit + provider.totalCost, 0);
     };
 
@@ -134,19 +131,16 @@ export default function ProviderStats() {
 
     const getPieChartData = () => {
         if (!stats) return null;
-
-        // --- START: ORIGINAL PIE COLORS (NOT CHANGED) ---
         const colors = [
-            'rgba(59, 130, 246, 0.8)',   // Blue
-            'rgba(16, 185, 129, 0.8)',   // Green
-            'rgba(245, 158, 11, 0.8)',   // Orange
-            'rgba(139, 92, 246, 0.8)',   // Purple
-            'rgba(236, 72, 153, 0.8)',   // Pink
-            'rgba(239, 68, 68, 0.8)',    // Red
-            'rgba(34, 197, 94, 0.8)',    // Lime
-            'rgba(168, 85, 247, 0.8)',   // Violet
+            'rgba(59, 130, 246, 0.8)',
+            'rgba(16, 185, 129, 0.8)',
+            'rgba(245, 158, 11, 0.8)',
+            'rgba(139, 92, 246, 0.8)',
+            'rgba(236, 72, 153, 0.8)',
+            'rgba(239, 68, 68, 0.8)',
+            'rgba(34, 197, 94, 0.8)',
+            'rgba(168, 85, 247, 0.8)',
         ];
-
         const borderColors = [
             'rgba(59, 130, 246, 1)',
             'rgba(16, 185, 129, 1)',
@@ -157,7 +151,6 @@ export default function ProviderStats() {
             'rgba(34, 197, 94, 1)',
             'rgba(168, 85, 247, 1)',
         ];
-        // --- END: ORIGINAL PIE COLORS (NOT CHANGED) ---
 
         return {
             labels: stats.byProvider.map(p => p.provider),
@@ -174,7 +167,6 @@ export default function ProviderStats() {
     };
 
     const getProviderPieChartData = (provider: ProviderStat) => {
-        // --- START: ORIGINAL PIE COLORS (NOT CHANGED) ---
         const modelColors = [
             "rgba(0,0,0,0.85)",
             "rgba(40, 39, 39, 0.85)",
@@ -200,15 +192,13 @@ export default function ProviderStats() {
             "rgba(230,230,230,1)",
         ];
 
-        // If all costs are 0, show token distribution instead
         const totalCost = provider.models.reduce((sum, m) => sum + m.cost, 0);
         const totalTokens = provider.models.reduce((sum, m) => sum + m.totalTokens, 0);
         const useTokens = totalCost === 0;
 
-        // If both are 0, show equal distribution
         let data;
         if (totalCost === 0 && totalTokens === 0) {
-            data = provider.models.map(() => 1); // Equal slices
+            data = provider.models.map(() => 1);
         } else {
             data = provider.models.map(m => useTokens ? m.totalTokens : m.cost);
         }
@@ -227,51 +217,6 @@ export default function ProviderStats() {
         };
     };
 
-    const pieChartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'bottom' as const,
-                labels: {
-                    color: '#d1d5db',
-                    font: {
-                        size: 12,
-                        weight: '500',
-                    },
-                    padding: 15,
-                },
-            },
-            tooltip: {
-                // Configured tooltip for dark theme (black background, white text)
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                padding: 12,
-                titleColor: '#fff',
-                bodyColor: '#fff',
-                borderColor: '#4b5563',
-                borderWidth: 1,
-                callbacks: {
-                    label: function (context: any) {
-                        const provider = stats?.byProvider[context.dataIndex];
-                        if (!provider) return '';
-
-                        const cost = formatCurrency(context.parsed);
-                        const percentage = ((context.parsed / stats!.overall.totalCost) * 100).toFixed(1);
-                        const tokens = formatNumber(provider.inputTokens + provider.outputTokens);
-                        const remaining = formatCurrency(provider.credit);
-
-                        return [
-                            `Cost: ${cost} (${percentage}%)`,
-                            `Tokens: ${tokens}`,
-                            `Remaining: ${remaining}`,
-                            `Models: ${provider.models.length}`,
-                        ];
-                    },
-                },
-            },
-        },
-    };
-
     const getProviderPieChartOptions = (provider: ProviderStat) => {
         const totalCost = provider.models.reduce((sum, m) => sum + m.cost, 0);
         const useTokens = totalCost === 0;
@@ -284,7 +229,6 @@ export default function ProviderStats() {
                     display: false,
                 },
                 tooltip: {
-                    // Configured tooltip for dark theme (black background, white text)
                     backgroundColor: 'rgba(0, 0, 0, 0.9)',
                     padding: 12,
                     titleColor: '#fff',
@@ -349,7 +293,6 @@ export default function ProviderStats() {
     const getModelPricingBarChartData = () => {
         if (!stats) return null;
 
-        // Get all models and calculate total price (input + output)
         const allModels = stats.byProvider
             .flatMap(provider =>
                 provider.models.map(model => ({
@@ -473,23 +416,20 @@ export default function ProviderStats() {
 
     if (loading) {
         return (
-            // Dark theme loader
             <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-400 mx-auto"></div>
-                <p className="mt-4 text-gray-400">Loading statistics...</p>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-zinc-400 mx-auto"></div>
+                <p className="mt-4 text-xs sm:text-sm xl:text-base text-zinc-400">Loading statistics...</p>
             </div>
         );
     }
 
     if (error) {
         return (
-            // Dark theme error box
-            <div className="bg-gray-900 border border-gray-700 rounded-lg p-4">
-                <p className="text-red-400">{error}</p>
+            <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-4">
+                <p className="text-red-400 text-xs sm:text-sm xl:text-base">{error}</p>
                 <button
                     onClick={fetchStats}
-                    // Dark theme retry button
-                    className="mt-2 px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
+                    className="mt-2 px-4 py-2 bg-zinc-700 text-white rounded hover:bg-zinc-600 transition-colors text-xs sm:text-sm xl:text-base"
                 >
                     Retry
                 </button>
@@ -499,10 +439,9 @@ export default function ProviderStats() {
 
     if (!stats || stats.byProvider.length === 0) {
         return (
-            // Dark theme no data box
-            <div className="bg-gray-900 rounded-lg p-6 text-center border border-gray-700">
-                <p className="text-gray-400">No provider statistics available yet.</p>
-                <p className="text-sm text-gray-500 mt-2">
+            <div className="bg-zinc-900 rounded-lg p-6 text-center border border-zinc-700">
+                <p className="text-zinc-400 text-xs sm:text-sm xl:text-base">No provider statistics available yet.</p>
+                <p className="text-[10px] sm:text-xs xl:text-sm text-zinc-500 mt-2">
                     Configure providers and start chatting to see statistics.
                 </p>
             </div>
@@ -511,44 +450,44 @@ export default function ProviderStats() {
 
     const pieData = getPieChartData();
     const barData = getModelPricingBarChartData();
+
     return (
         <div className="space-y-6">
-            {/* Login Modal */}
             <LoginModal
                 isOpen={isLoginModalOpen}
                 onClose={() => setIsLoginModalOpen(false)}
             />
 
-            {/* Overall Statistics #131111 */}
-            <div className="bg-[#38343a] rounded-xl p-8 border border-gray-700 shadow-2xl">
+            {/* Overall Statistics */}
+            <div className="bg-[#38343a] rounded-xl p-8 border border-zinc-700 shadow-2xl">
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-                    <div className="bg-[#131111] rounded-lg p-4 border border-gray-700">
-                        <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Total Tokens</p>
-                        <p className="sm:text-md lg:text-2xl font-bold text-white">
+                    <div className="bg-[#131111] rounded-lg p-4 border border-zinc-700">
+                        <p className="text-xs sm:text-sm xl:text-lg font-medium text-zinc-400 uppercase tracking-wider mb-2">Total Tokens</p>
+                        <p className="text-sm sm:text-lg xl:text-xl font-bold text-white">
                             {formatNumber(stats.overall.totalTokens)}
                         </p>
                     </div>
-                    <div className="bg-[#131111] rounded-lg p-4 border border-gray-700">
-                        <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Total Spent</p>
-                        <p className="sm:text-md lg:text-2xl font-bold text-gray-300">
+                    <div className="bg-[#131111] rounded-lg p-4 border border-zinc-700">
+                        <p className="text-xs sm:text-sm xl:text-lg font-medium text-zinc-400 uppercase tracking-wider mb-2">Total Spent</p>
+                        <p className="text-sm sm:text-lg xl:text-xl font-bold text-gray-300">
                             {formatCurrency(stats.overall.totalCost)}
                         </p>
                     </div>
-                    <div className="bg-[#131111] rounded-lg p-4 border border-gray-700">
-                        <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Initial Credit</p>
-                        <p className="sm:text-md lg:text-2xl font-bold text-white">
+                    <div className="bg-[#131111] rounded-lg p-4 border border-zinc-700">
+                        <p className="text-xs sm:text-sm xl:text-lg font-medium text-zinc-400 uppercase tracking-wider mb-2">Initial Credit</p>
+                        <p className="text-sm sm:text-lg xl:text-xl font-bold text-white">
                             {formatCurrency(calculateTotalInitialCredit())}
                         </p>
                     </div>
-                    <div className="bg-[#131111] rounded-lg p-4 border border-gray-700">
-                        <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Credit Left</p>
-                        <p className="sm:text-md lg:text-2xl font-bold text-gray-200">
+                    <div className="bg-[#131111] rounded-lg p-4 border border-zinc-700">
+                        <p className="text-xs sm:text-sm xl:text-lg font-medium text-zinc-400 uppercase tracking-wider mb-2">Credit Left</p>
+                        <p className="text-sm sm:text-lg xl:text-xl font-bold text-gray-200">
                             {formatCurrency(calculateTotalCredit())}
                         </p>
                     </div>
-                    <div className="bg-[#131111] rounded-lg p-4 border border-gray-700">
-                        <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Total Models</p>
-                        <p className="sm:text-md lg:text-2xl font-bold text-white">
+                    <div className="bg-[#131111] rounded-lg p-4 border border-zinc-700">
+                        <p className="text-xs sm:text-sm xl:text-lg font-medium text-zinc-400 uppercase tracking-wider mb-2">Total Models</p>
+                        <p className="text-sm sm:text-lg xl:text-xl font-bold text-white">
                             {stats.overall.totalModels}
                         </p>
                     </div>
@@ -556,7 +495,7 @@ export default function ProviderStats() {
             </div>
 
             {/* Model Pricing Bar Chart */}
-            <div className="bg-[#38343a] rounded-xl p-8 border border-gray-700 shadow-2xl">
+            <div className="bg-[#38343a] rounded-xl p-8 border border-zinc-700 shadow-2xl">
                 <div className="overflow-x-auto">
                     <div className="min-w-[800px] h-[500px]">
                         {isMounted && barData && (
@@ -566,16 +505,12 @@ export default function ProviderStats() {
                 </div>
             </div>
 
-
             {/* Provider-wise Statistics with Pie Charts */}
-            <div >
+            <div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {stats.byProvider.map((provider) => {
                         const remainingCredit = calculateRemainingCredit(provider);
                         const initialCredit = calculateInitialCredit(provider);
-                        const totalTokens = calculateTotalTokens(provider);
-                        const avgPricePerMillion = calculateAvgPricePerMillion(provider);
-                        const remainingTokens = calculateRemainingTokens(remainingCredit, avgPricePerMillion);
                         const creditPercentage = initialCredit > 0
                             ? ((remainingCredit / initialCredit) * 100)
                             : 0;
@@ -584,32 +519,30 @@ export default function ProviderStats() {
                         return (
                             <div
                                 key={provider.provider}
-                                className="bg-[#38343a] rounded-xl shadow-xl p-6 border border-gray-700 hover:border-gray-600 transition-all duration-300"
+                                className="bg-[#38343a] rounded-xl shadow-xl p-6 border border-zinc-700 hover:border-zinc-600 transition-all duration-300"
                             >
                                 {/* Provider Header */}
                                 <div className="flex items-center justify-center mb-6">
-                                    <h4 className="text-xl font-bold text-white tracking-tight">
+                                    <h4 className="text-sm sm:text-lg xl:text-xl font-bold text-white tracking-tight">
                                         {provider.provider}
                                     </h4>
                                 </div>
                                 {/* Pie Chart */}
                                 {isMounted && provider.models.length > 0 && (
                                     <div className="w-full h-64 mb-4 relative">
-                                        {/* Chart colors are explicitly NOT changed */}
                                         <Pie data={providerPieData} options={getProviderPieChartOptions(provider)} />
                                     </div>
                                 )}
 
-
                                 {/* Credit Progress Bar */}
-                                <div className="mb-4 bg-[#131111] rounded-lg p-4 border border-gray-700/50">
-                                    <div className="flex justify-between text-xs font-medium text-gray-300 mb-2">
+                                <div className="mb-4 bg-[#131111] rounded-lg p-4 border border-zinc-700/50">
+                                    <div className="flex justify-between text-[10px] sm:text-xs xl:text-sm font-medium text-gray-300 mb-2">
                                         <span className="uppercase tracking-wider">Credit Usage</span>
-                                        <span className="text-gray-400">
+                                        <span className="text-zinc-400">
                                             {creditPercentage.toFixed(1)}% remaining
                                         </span>
                                     </div>
-                                    <div className="w-full bg-gray-700/50 rounded-full h-2.5 overflow-hidden">
+                                    <div className="w-full bg-zinc-700/50 rounded-full h-2.5 overflow-hidden">
                                         <div
                                             className={`h-2.5 rounded-full transition-all duration-500 ${creditPercentage > 50
                                                 ? 'bg-gradient-to-r from-gray-300 to-gray-400'
@@ -629,14 +562,13 @@ export default function ProviderStats() {
 
             {/* Refresh Button */}
             <div className="flex justify-center items-center gap-4 mt-8">
-
                 <button
                     onClick={recalculateCosts}
                     disabled={recalculating}
                     className="h-10 px-4 sm:h-12 sm:px-8 bg-[#131111] text-white font-medium rounded-lg 
-                            transition-all duration-300 shadow-lg border border-gray-600 
+                            transition-all duration-300 shadow-lg border border-zinc-600 
                             hover:shadow-xl hover:bg-[#1b191d] flex items-center gap-3
-                            disabled:opacity-50 cursor-pointer justify-center"
+                            disabled:opacity-50 cursor-pointer justify-center text-xs sm:text-sm xl:text-base"
                 >
                     {recalculating ? (
                         <>

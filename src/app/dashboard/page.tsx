@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Bot, Send, Loader2, ThumbsUp, ThumbsDown, Copy, ImagePlus, X, Search, SendHorizontal } from "lucide-react";
+import { Bot, Loader2, ThumbsUp, ThumbsDown, Copy, ImagePlus, X, Search, SendHorizontal } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -64,7 +64,7 @@ export default function DashboardPage() {
     const [sessions, setSessions] = useState<ChatSession[]>([]);
     const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
-    // CSS for the black scrollbar
+    // CSS for the black/dark scrollbar
     const scrollbarStyles = `
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
@@ -73,13 +73,13 @@ export default function DashboardPage() {
             background: transparent;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-            background-color: #000000;
+            background-color: #52525b; /* zinc-600 */
             border-radius: 10px;
         }
         /* Firefox fallback */
         .custom-scrollbar {
             scrollbar-width: thin;
-            scrollbar-color: #000000 transparent;
+            scrollbar-color: #52525b transparent;
         }
     `;
 
@@ -568,7 +568,7 @@ export default function DashboardPage() {
     };
 
     return (
-        <div className="flex h-screen justify-center bg-gray-100 dark:bg-zinc-900 font-sans">
+        <div className="flex h-screen justify-center bg-zinc-900 font-sans text-white">
             <div className="w-full items-start relative">
                 {/* Floating Hamburger Menu - Top Right */}
                 <div className="absolute top-2 right-2 z-30">
@@ -587,11 +587,11 @@ export default function DashboardPage() {
 
                     {/* Scrollable chat section */}
                     <div
-                        className="w-full h-full bg-black flex space-x-1 border-b border-gray-300 dark:border-gray-600 overflow-x-auto horizontal-scrollbar"
+                        className="w-full h-full bg-black flex space-x-1 border-b border-zinc-700 overflow-x-auto horizontal-scrollbar"
                     >
                         {loading ? (
                             <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                <p>Loading AI modals...</p>
+                                <p className="text-xs sm:text-sm xl:text-base">Loading AI modals...</p>
                             </div>
                         ) : modals.length > 0 ? (
                             modals.map((modal) => {
@@ -608,10 +608,10 @@ export default function DashboardPage() {
                                 return (
                                     <div
                                         key={modal._id}
-                                        className={`${getModalWidthClass()} min-w-[400px] h-full border-r border-gray-300 bg-white dark:bg-zinc-800 flex-shrink-0 flex flex-col`}
+                                        className={`${getModalWidthClass()} min-w-[400px] h-full border-r border-zinc-700 bg-zinc-800 flex-shrink-0 flex flex-col`}
                                     >
                                         {/* Modal Header */}
-                                        <div className="p-3 border-b border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900">
+                                        <div className="p-3 border-b border-zinc-700 bg-zinc-900">
                                             <div className="flex items-center gap-2">
                                                 {getProviderLogo(modal.provider) ? (
                                                     <img
@@ -620,10 +620,10 @@ export default function DashboardPage() {
                                                         className="h-6 w-6 object-contain rounded"
                                                     />
                                                 ) : (
-                                                    <Bot className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                                    <Bot className="h-5 w-5 text-blue-400" />
                                                 )}
                                                 <div className="flex-1">
-                                                    <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                                                    <h3 className="font-semibold text-gray-100 text-sm sm:text-lg xl:text-xl">
                                                         {modal.name}
                                                     </h3>
                                                 </div>
@@ -649,9 +649,9 @@ export default function DashboardPage() {
                                                         className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
                                                     >
                                                         <div
-                                                            className={`max-w-[95%] rounded-lg px-3 py-2 text-sm ${msg.role === "user"
+                                                            className={`max-w-[95%] rounded-lg px-3 py-2 text-xs sm:text-sm xl:text-base ${msg.role === "user"
                                                                 ? "bg-blue-600 text-white"
-                                                                : "bg-gray-200 dark:bg-zinc-700 text-gray-900 dark:text-gray-100"
+                                                                : "bg-zinc-700 text-gray-100"
                                                                 }`}
                                                         >
                                                             {msg.role === "user" ? (
@@ -666,7 +666,7 @@ export default function DashboardPage() {
                                                                     <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>
                                                                 </>
                                                             ) : (
-                                                                <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-table:my-2">
+                                                                <div className="prose prose-invert prose-sm max-w-none prose-p:my-2 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-table:my-2">
                                                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                                                         {msg.content}
                                                                     </ReactMarkdown>
@@ -679,7 +679,7 @@ export default function DashboardPage() {
                                                             <div className="flex gap-1 mt-1 mr-2">
                                                                 <button
                                                                     onClick={() => copyResponseToClipboard(msg.content)}
-                                                                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors text-gray-400 dark:text-gray-500"
+                                                                    className="p-1 rounded hover:bg-zinc-600 transition-colors text-gray-500"
                                                                     title="Copy message"
                                                                 >
                                                                     <Copy className="h-3.5 w-3.5" />
@@ -693,9 +693,9 @@ export default function DashboardPage() {
                                                                 <div className="flex gap-1">
                                                                     <button
                                                                         onClick={() => handleFeedback(modal._id, idx, 'like')}
-                                                                        className={`p-1 rounded hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors ${msg.feedback === 'like'
-                                                                            ? 'text-blue-600 dark:text-blue-400'
-                                                                            : 'text-gray-400 dark:text-gray-500'
+                                                                        className={`p-1 rounded hover:bg-zinc-600 transition-colors ${msg.feedback === 'like'
+                                                                            ? 'text-blue-400'
+                                                                            : 'text-gray-500'
                                                                             }`}
                                                                         title="Like this response"
                                                                     >
@@ -703,9 +703,9 @@ export default function DashboardPage() {
                                                                     </button>
                                                                     <button
                                                                         onClick={() => handleFeedback(modal._id, idx, 'dislike')}
-                                                                        className={`p-1 rounded hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors ${msg.feedback === 'dislike'
-                                                                            ? 'text-red-600 dark:text-red-400'
-                                                                            : 'text-gray-400 dark:text-gray-500'
+                                                                        className={`p-1 rounded hover:bg-zinc-600 transition-colors ${msg.feedback === 'dislike'
+                                                                            ? 'text-red-400'
+                                                                            : 'text-gray-500'
                                                                             }`}
                                                                         title="Dislike this response"
                                                                     >
@@ -713,7 +713,7 @@ export default function DashboardPage() {
                                                                     </button>
                                                                     <button
                                                                         onClick={() => copyResponseToClipboard(msg.content)}
-                                                                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors text-gray-400 dark:text-gray-500"
+                                                                        className="p-1 rounded hover:bg-zinc-600 transition-colors text-gray-500"
                                                                         title="Copy response"
                                                                     >
                                                                         <Copy className="h-3.5 w-3.5" />
@@ -724,7 +724,7 @@ export default function DashboardPage() {
                                                     </div>
                                                 ))
                                             ) : (
-                                                <div className="h-full flex items-center justify-center text-gray-400 dark:text-gray-500 text-sm">
+                                                <div className="h-full flex items-center justify-center text-gray-500 text-[10px] sm:text-xs xl:text-sm">
                                                     <p>Start chatting with {modal.name}</p>
                                                 </div>
                                             )}
@@ -735,8 +735,8 @@ export default function DashboardPage() {
                         ) : (
                             <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
                                 <Bot className="h-16 w-16 mb-4 text-gray-500" />
-                                <p className="text-lg mb-2">No active AI modals</p>
-                                <p className="text-sm">Enable modals from the menu or add new ones in your profile</p>
+                                <p className="mb-2 text-xs sm:text-sm xl:text-lg">No active AI modals</p>
+                                <p className="text-[10px] sm:text-xs xl:text-sm">Enable modals from the menu or add new ones in your profile</p>
                             </div>
                         )}
                     </div>
@@ -744,7 +744,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Bottom input bar */}
-                <div className="w-full h-1/6 bg-black p-3 sm:p-4 md:p-6 justify-center flex items-center border-t border-gray-300 dark:border-gray-600">
+                <div className="w-full h-1/6 bg-black p-3 sm:p-4 md:p-6 justify-center flex items-center border-t border-zinc-700">
                     <div className="w-full max-w-4xl flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3">
                         {/* Image Preview - Compact thumbnail */}
                         {imagePreview && (
@@ -780,7 +780,7 @@ export default function DashboardPage() {
                             className={`p-2 sm:p-3 rounded-full transition-all flex-shrink-0 cursor-pointer ${webSearchEnabled
                                 ? 'bg-blue-800 text-white'
                                 : 'bg-[#38343a] text-white'
-                                } disabled:bg-gray-500 disabled:cursor-not-allowed`}
+                                } disabled:bg-zinc-700 disabled:cursor-not-allowed`}
                             title={webSearchEnabled ? "Web search on" : "Web search off"}
                         >
                             <Search className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -790,7 +790,7 @@ export default function DashboardPage() {
                         <button
                             onClick={triggerImageUpload}
                             disabled={isSending || modals.length === 0}
-                            className="p-2 sm:p-3 rounded-full bg-[#38343a] text-white hover:bg-[#4a4750] disabled:bg-gray-500 cursor-pointer transition-all flex-shrink-0"
+                            className="p-2 sm:p-3 rounded-full bg-[#38343a] text-white hover:bg-[#4a4750] disabled:bg-zinc-700 cursor-pointer transition-all flex-shrink-0"
                             title="Upload image"
                         >
                             <ImagePlus className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -801,10 +801,10 @@ export default function DashboardPage() {
                         <textarea
                             ref={textareaRef}
                             className={`flex-1 min-w-0 py-2 px-4 sm:py-3 sm:px-6 
-                                border border-gray-300 dark:border-gray-600 
-                                bg-white dark:bg-zinc-800 
-                                text-gray-900 dark:text-gray-100 
-                                text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 
+                                border border-zinc-600 
+                                bg-zinc-800 
+                                text-white 
+                                text-xs sm:text-sm xl:text-base focus:outline-none focus:ring-2 focus:ring-blue-500 
                                 transition-all duration-150 custom-scrollbar
                                 ${isExpanded ? "rounded-xl" : "rounded-full"}`}
 
@@ -845,7 +845,7 @@ export default function DashboardPage() {
                         <button
                             onClick={sendToAllModals}
                             disabled={isSending || !inputValue.trim() || modals.length === 0}
-                            className="p-2 sm:p-3 rounded-full bg-[#4a4750] text-white hover:bg-[#4a4750] disabled:bg-[#38343a] cursor-pointer transition-all flex-shrink-0"
+                            className="p-2 sm:p-3 rounded-full bg-[#4a4750] text-white hover:bg-[#5a5760] cursor-pointer transition-all flex-shrink-0 disabled:bg-zinc-700 disabled:cursor-not-allowed"
                             title="Send message"
                         >
                             {isSending ? (

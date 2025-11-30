@@ -1,727 +1,599 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Key, Plus, Save, Trash2, Loader2, RefreshCw, Edit, X, TrendingUp } from "lucide-react";
-import { useRouter } from 'next/navigation';
-import SideMenu from "../components/SideMenu"; // Adjust this path if needed
+import React, { useEffect, useState } from "react";
+import { Key, Save, Trash2, Loader2, Edit, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import SideMenu from "../components/SideMenu";
+
+// -----------------------------
+// Types
+// -----------------------------
 interface ProviderTemplate {
+  name: string;
+  availableModels: {
+    id: string;
     name: string;
-    availableModels: { id: string; name: string; inputPricePerMillion: number; outputPricePerMillion: number }[];
-    defaultEndpoint: string;
-    defaultRequestType: string;
-    defaultResponsePath: string;
-    headerTemplate: Record<string, string>;
+    inputPricePerMillion: number;
+    outputPricePerMillion: number;
+  }[];
+  defaultEndpoint: string;
+  defaultRequestType: string;
+  defaultResponsePath: string;
+  headerTemplate: Record<string, string>;
 }
 
 interface ProviderConfig {
+  provider: string;
+  credit: number;
+  totalTokensUsed: number;
+}
+
+interface ModelType {
+  _id: string;
+  provider: string;
+  modelId: string;
+  status: string;
+  inputPricePerMillion: number;
+  outputPricePerMillion: number;
+  name: string;
+  inputTokensUsed: number;
+  outputTokensUsed: number;
+  totalCost: number;
+}
+
+// -----------------------------
+const currency = (n?: number) => `$${(n ?? 0).toFixed(2)}`;
+
+// -----------------------------
+// Reusable Components
+// -----------------------------
+function ModalShell({
+  title,
+  onClose,
+  children,
+  footer,
+}: {
+  title: React.ReactNode;
+  onClose: () => void;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="bg-zinc-800 text-white rounded-xl shadow-xl w-full max-w-lg sm:max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col">
+        <div className="sticky top-0 z-10 bg-zinc-800 px-4 sm:px-6 py-4 border-b border-zinc-700 flex items-center justify-between">
+          <h3 className="text-sm sm:text-lg xl:text-xl font-semibold">{title}</h3>
+
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-200 cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-4 sm:p-6 grow">{children}</div>
+
+        {footer && (
+          <div className="sticky bottom-0 bg-zinc-800 px-4 sm:px-6 py-4 border-t border-zinc-700">
+            {footer}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ModelPriceRow({
+  model,
+  onChange,
+}: {
+  model: ModelType;
+  onChange: (id: string, input: number, output: number) => void;
+}) {
+  return (
+    <div className="flex flex-col sm:flex-row gap-4 sm:items-center bg-zinc-700 p-3 rounded-lg">
+      <div className="flex-1">
+        <p className="font-medium text-xs sm:text-sm xl:text-base text-white">{model.name}</p>
+
+        <p className="text-[10px] sm:text-xs xl:text-sm text-gray-400 truncate">
+          {model.modelId}
+        </p>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+
+        <div className="flex items-center gap-2">
+          <span className="w-16 sm:text-xs xl:text-sm text-gray-400">
+            Input $
+          </span>
+
+          <input
+            type="number"
+            step="0.01"
+            value={model.inputPricePerMillion ?? 0}
+            onChange={(e) =>
+              onChange(
+                model._id,
+                parseFloat(e.target.value) || 0,
+                model.outputPricePerMillion ?? 0
+              )
+            }
+            className="w-full sm:w-28 px-3 py-2 border border-zinc-600 rounded-lg bg-zinc-800 text-white text-xs sm:text-sm xl:text-base"
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="w-16 sm:text-xs xl:text-sm text-gray-400">
+            Output $
+          </span>
+
+          <input
+            type="number"
+            step="0.01"
+            value={model.outputPricePerMillion ?? 0}
+            onChange={(e) =>
+              onChange(
+                model._id,
+                model.inputPricePerMillion ?? 0,
+                parseFloat(e.target.value) || 0
+              )
+            }
+            className="w-full sm:w-28 px-3 py-2 border border-zinc-600 rounded-lg bg-zinc-800 text-white text-xs sm:text-sm xl:text-base"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProviderCard({
+  config,
+  models,
+  onEdit,
+  onDelete,
+}: {
+  config: ProviderConfig;
+  models: ModelType[];
+  onEdit: (provider: string) => void;
+  onDelete: (provider: string) => void;
+}) {
+  const totalCost = models.reduce((s, m) => s + (m.totalCost || 0), 0);
+  const creditLeft = (config.credit || 0) - totalCost;
+
+  return (
+    <div className="bg-zinc-800 text-white rounded-lg shadow-md p-6">
+
+      <div className="flex justify-between">
+        <div>
+          <h4 className="font-semibold text-xs sm:text-sm xl:text-lg">
+            {config.provider}
+          </h4>
+
+          <p className="text-[10px] sm:text-xs xl:text-sm text-gray-400">
+            Credit: {currency(config.credit)}
+          </p>
+        </div>
+
+        <div className="flex gap-2">
+
+          <button
+            onClick={() => onEdit(config.provider)}
+            className="text-gray-300 hover:text-white cursor-pointer"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={() => onDelete(config.provider)}
+            className="text-red-500 hover:text-red-400 cursor-pointer"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-4 text-[10px] sm:text-xs xl:text-sm text-gray-400">
+        <p>Models: {models.length}</p>
+        <p>Used: {currency(totalCost)}</p>
+        <p>
+          Left: <span className="font-semibold text-gray-200">{currency(creditLeft)}</span>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// -----------------------------
+// MAIN PAGE
+// -----------------------------
+export default function ProfilePage() {
+  const [loading, setLoading] = useState(true);
+
+  const [providers, setProviders] = useState<ProviderTemplate[]>([]);
+  const [providerConfigs, setProviderConfigs] = useState<ProviderConfig[]>([]);
+  const [models, setModels] = useState<ModelType[]>([]);
+
+  // Add provider
+  const [selectedProvider, setSelectedProvider] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [initialCredit, setInitialCredit] = useState(0);
+  const [saving, setSaving] = useState(false);
+
+  // Edit modal
+  const [editingProvider, setEditingProvider] = useState<string | null>(null);
+  const [editingModels, setEditingModels] = useState<ModelType[]>([]);
+  const [editingApiKey, setEditingApiKey] = useState("");
+  const [editingCredit, setEditingCredit] = useState<{
     provider: string;
     credit: number;
-    totalTokensUsed: number;
-    // Note: API key is NOT included for security reasons - it's stored server-side only
-}
+  } | null>(null);
 
-interface Modal {
-    _id: string;
-    provider: string;
-    modelId: string;
-    status: string;
-    inputPricePerMillion: number;
-    outputPricePerMillion: number;
-    name: string;
-    inputTokensUsed: number;
-    outputTokensUsed: number;
-    totalCost: number;
-}
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-interface Coin {
-    _id: string;
-    symbol: string;
-    createdAt: string;
-    history: Array<{ price: number; timestamp: string }>;
-}
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [pRes, cRes, mRes] = await Promise.all([
+        fetch("/api/providers"),
+        fetch("/api/provider-configs"),
+        fetch("/api/modals"),
+      ]);
 
-export default function ProfilePage() {
-    const router = useRouter();
-    const [loading, setLoading] = useState(true);
-    const [providers, setProviders] = useState<ProviderTemplate[]>([]);
-    const [providerConfigs, setProviderConfigs] = useState<ProviderConfig[]>([]);
-    const [modals, setModals] = useState<Modal[]>([]);
-    const [selectedProvider, setSelectedProvider] = useState<string>("");
-    const [apiKey, setApiKey] = useState<string>("");
-    const [saving, setSaving] = useState(false);
-    const [editingProvider, setEditingProvider] = useState<string | null>(null);
-    const [editingModels, setEditingModels] = useState<Modal[]>([]);
-    const [editingApiKey, setEditingApiKey] = useState<string>("");
-    const [editingCredit, setEditingCredit] = useState<{ provider: string; credit: number } | null>(null);
-    const [initialCredit, setInitialCredit] = useState<number>(0);
+      const p = await pRes.json();
+      const c = await cRes.json();
+      const m = await mRes.json();
 
-    // Coin tracking states
-    const [coins, setCoins] = useState<Coin[]>([]);
-    const [newSymbol, setNewSymbol] = useState('');
-    const [adding, setAdding] = useState(false);
-    const [coinError, setCoinError] = useState('');
-    const [activeTab, setActiveTab] = useState<'providers' | 'coins'>('providers');
+      setProviders(p.providers || []);
+      setProviderConfigs(c.configs || []);
+      setModels(m.modals || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    useEffect(() => {
-        fetchData();
-    }, []);
+  // Save Provider
+  const handleSaveProvider = async () => {
+    if (!selectedProvider || !apiKey) return;
+    setSaving(true);
 
-    const fetchData = async () => {
-        try {
-            const [providersRes, configsRes, modalsRes, coinsRes] = await Promise.all([
-                fetch("/api/providers"),
-                fetch("/api/provider-configs"),
-                fetch("/api/modals"),
-                fetch("/api/coins"),
-            ]);
+    try {
+      await fetch("/api/provider-configs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider: selectedProvider,
+          api_key: apiKey,
+          credit: initialCredit,
+        }),
+      });
 
-            const providersData = await providersRes.json();
-            const configsData = await configsRes.json();
-            const modalsData = await modalsRes.json();
-            const coinsData = await coinsRes.json();
-
-            setProviders(providersData.providers || []);
-            setProviderConfigs(configsData.configs || []);
-            setModals(modalsData.modals || []);
-            setCoins(coinsData.coins || []);
-        } catch (error) {
-            console.error("Error fetching data:", error);
-        } finally {
-            setLoading(false);
+      const template = providers.find((p) => p.name === selectedProvider);
+      if (template) {
+        for (const model of template.availableModels) {
+          await fetch("/api/modals", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              provider: selectedProvider,
+              modelId: model.id,
+              name: model.name,
+              apiEndpoint: template.defaultEndpoint,
+              requestType: template.defaultRequestType,
+              headers: template.headerTemplate,
+              responsePath: template.defaultResponsePath,
+              inputPricePerMillion: model.inputPricePerMillion,
+              outputPricePerMillion: model.outputPricePerMillion,
+            }),
+          });
         }
-    };
+      }
 
-    const handleSaveProvider = async () => {
-        if (!selectedProvider || !apiKey) return;
+      await fetchData();
+      setSelectedProvider("");
+      setApiKey("");
+      setInitialCredit(0);
+    } finally {
+      setSaving(false);
+    }
+  };
 
-        setSaving(true);
-        try {
-            const configRes = await fetch("/api/provider-configs", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    provider: selectedProvider,
-                    api_key: apiKey,
-                    credit: initialCredit
-                }),
-            });
+  const handleDeleteProvider = async (provider: string) => {
+    if (!confirm("Delete provider and its models?")) return;
 
-            if (!configRes.ok) throw new Error("Failed to save provider config");
+    await fetch(`/api/provider-configs?provider=${provider}`, {
+      method: "DELETE",
+    });
 
-            const providerTemplate = providers.find((p) => p.name === selectedProvider);
-            if (providerTemplate) {
-                for (const model of providerTemplate.availableModels) {
-                    await fetch("/api/modals", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            name: model.name,
-                            provider: selectedProvider,
-                            modelId: model.id,
-                            apiEndpoint: providerTemplate.defaultEndpoint,
-                            requestType: providerTemplate.defaultRequestType,
-                            headers: providerTemplate.headerTemplate,
-                            responsePath: providerTemplate.defaultResponsePath,
-                            inputPricePerMillion: model.inputPricePerMillion,
-                            outputPricePerMillion: model.outputPricePerMillion,
-                        }),
-                    });
-                }
-            }
-
-            await fetchData();
-            setSelectedProvider("");
-            setApiKey("");
-            setInitialCredit(0);
-            alert("Provider saved successfully!");
-        } catch (error) {
-            console.error("Error saving provider:", error);
-            alert("Failed to save provider");
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const handleDeleteProvider = async (provider: string) => {
-        if (!confirm(`Delete ${provider} and all its models?`)) return;
-
-        try {
-            await fetch(`/api/provider-configs?provider=${provider}`, {
-                method: "DELETE",
-            });
-
-            const providerModals = modals.filter((m) => m.provider === provider);
-            for (const modal of providerModals) {
-                await fetch(`/api/modals?id=${modal._id}`, { method: "DELETE" });
-            }
-
-            await fetchData();
-        } catch (error) {
-            console.error("Error deleting provider:", error);
-            alert("Failed to delete provider");
-        }
-    };
-
-    const handleSyncModels = async (provider: string) => {
-        try {
-            const res = await fetch("/api/modals/sync", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ provider }),
-            });
-
-            const data = await res.json();
-            if (data.success) {
-                await fetchData();
-                alert(`Successfully synced ${data.count} models for ${provider}`);
-            } else {
-                alert(`Failed to sync models: ${data.error}`);
-            }
-        } catch (error) {
-            console.error("Error syncing models:", error);
-            alert("Failed to sync models");
-        }
-    };
-
-    const handleEditProvider = (provider: string) => {
-        const providerModals = modals.filter((m) => m.provider === provider);
-        // Ensure all price fields have default values
-        const modalsWithDefaults = providerModals.map(m => ({
-            ...m,
-            inputPricePerMillion: m.inputPricePerMillion ?? 0,
-            outputPricePerMillion: m.outputPricePerMillion ?? 0,
-            inputTokensUsed: m.inputTokensUsed ?? 0,
-            outputTokensUsed: m.outputTokensUsed ?? 0,
-            totalCost: m.totalCost ?? 0
-        }));
-        setEditingModels(modalsWithDefaults);
-        setEditingProvider(provider);
-
-        // Initialize API key input as empty (user can update it if needed)
-        setEditingApiKey("");
-    };
-
-    const handleUpdatePrice = (modelId: string, inputPrice: number, outputPrice: number) => {
-        setEditingModels((prev) =>
-            prev.map((m) =>
-                m._id === modelId ? { ...m, inputPricePerMillion: inputPrice, outputPricePerMillion: outputPrice } : m
-            )
-        );
-    };
-
-    const handleSavePrices = async () => {
-        setSaving(true);
-        try {
-            // Update API key if changed
-            if (editingApiKey && editingProvider) {
-                await fetch("/api/provider-configs", {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        provider: editingProvider,
-                        api_key: editingApiKey,
-                    }),
-                });
-            }
-
-            // Update model prices
-            for (const modal of editingModels) {
-                await fetch("/api/modals", {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        _id: modal._id,
-                        inputPricePerMillion: modal.inputPricePerMillion,
-                        outputPricePerMillion: modal.outputPricePerMillion,
-                    }),
-                });
-            }
-
-            await fetchData();
-            setEditingProvider(null);
-            setEditingModels([]);
-            setEditingApiKey("");
-            alert("Settings updated successfully!");
-        } catch (error) {
-            console.error("Error updating settings:", error);
-            alert("Failed to update settings");
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const handleEditCredit = (provider: string, currentCredit: number) => {
-        setEditingCredit({ provider, credit: currentCredit });
-    };
-
-    const handleSaveCredit = async () => {
-        if (!editingCredit) return;
-
-        setSaving(true);
-        try {
-            await fetch("/api/provider-configs", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    provider: editingCredit.provider,
-                    credit: editingCredit.credit,
-                }),
-            });
-
-            await fetchData();
-            setEditingCredit(null);
-            alert("Credit updated successfully!");
-        } catch (error) {
-            console.error("Error updating credit:", error);
-            alert("Failed to update credit");
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    // Coin tracking functions
-    const handleAddCoin = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newSymbol.trim()) return;
-
-        setCoinError('');
-        setAdding(true);
-
-        try {
-            const response = await fetch('/api/coins', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ symbol: newSymbol.toUpperCase() }),
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                setNewSymbol('');
-                await fetchData();
-                alert(`Coin ${data.coin.symbol} added successfully!`);
-            } else {
-                setCoinError(data.error || 'Failed to add coin');
-            }
-        } catch (err: any) {
-            setCoinError(err.message || 'An error occurred');
-        } finally {
-            setAdding(false);
-        }
-    };
-
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-            </div>
-        );
+    const providerModels = models.filter((m) => m.provider === provider);
+    for (const modal of providerModels) {
+      await fetch(`/api/modals?id=${modal._id}`, {
+        method: "DELETE",
+      });
     }
 
-    return (
-        <>
-        <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 p-2">
-            <div className="flex justify-end">
-                <SideMenu/>
-            </div>
-            <div className="max-w-7xl mx-auto">
-                {/* AI Providers Tab */}
-                {activeTab === 'providers' && (
-                    <>
-                        <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-md p-6 mb-8">
-                            <div className="space-y-4">
-                                <div>
-                                    <select
-                                        value={selectedProvider}
-                                        onChange={(e) => setSelectedProvider(e.target.value)}
-                                        className="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-gray-100"
-                                    >
-                                        <option value="">Choose a provider...</option>
-                                        {providers
-                                            .filter((p) => !providerConfigs.find((c) => c.provider === p.name))
-                                            .map((provider) => (
-                                                <option key={provider.name} value={provider.name}>
-                                                    {provider.name}
-                                                </option>
-                                            ))}
-                                    </select>
-                                </div>
+    fetchData();
+  };
 
-                                {selectedProvider && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            API Key
-                                        </label>
-                                        <input
-                                            type="password"
-                                            value={apiKey}
-                                            onChange={(e) => setApiKey(e.target.value)}
-                                            placeholder="Enter your API key"
-                                            className="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-gray-100"
-                                        />
-                                    </div>
-                                )}
-
-                                {selectedProvider && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Initial Credit ($)
-                                        </label>
-                                        <input
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            value={initialCredit}
-                                            onChange={(e) => setInitialCredit(parseFloat(e.target.value) || 0)}
-                                            placeholder="Enter initial credit amount (optional)"
-                                            className="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-gray-100"
-                                        />
-                                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                            Set the credit budget for this provider (can be updated later)
-                                        </p>
-                                    </div>
-                                )}
-
-                                <button
-                                    onClick={handleSaveProvider}
-                                    disabled={!selectedProvider || !apiKey || saving}
-                                    className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                                >
-                                    {saving ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            Saving...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Save className="w-4 h-4" />
-                                            Save Provider
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4">
-
-                            {providerConfigs.length === 0 ? (
-                                <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-md p-8 text-center">
-                                    <p className="text-gray-500 dark:text-gray-400">
-                                        No providers configured yet. Add one above to get started!
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {providerConfigs.map((config) => {
-                                        const providerModals = modals.filter((m) => m.provider === config.provider);
-                                        const totalCost = providerModals.reduce((sum, m) => sum + (m.totalCost || 0), 0);
-                                        const creditLeft = (config.credit || 0) - totalCost;
-
-                                        return (
-                                            <div
-                                                key={config.provider}
-                                                className="bg-white dark:bg-zinc-800 rounded-lg shadow-md p-6"
-                                            >
-                                                <div className="flex items-center justify-between mb-4">
-                                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                                        {config.provider}
-                                                    </h3>
-                                                    <div className="flex gap-2">
-                                                        <button
-                                                            onClick={() => handleEditProvider(config.provider)}
-                                                            className="text-green-500 hover:text-green-600"
-                                                            title="Edit model prices"
-                                                        >
-                                                            <Edit className="w-4 h-4" />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleSyncModels(config.provider)}
-                                                            className="text-blue-500 hover:text-blue-600"
-                                                            title="Sync models to latest version"
-                                                        >
-                                                            <RefreshCw className="w-4 h-4" />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteProvider(config.provider)}
-                                                            className="text-red-500 hover:text-red-600"
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </button>
-                                                    </div>
-                                                </div>
-
-                                                <div className="space-y-2">
-
-                                                    {/* Credit Information */}
-                                                    <div className="bg-gray-50 dark:bg-zinc-700 rounded-lg p-3 space-y-2">
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                                Credit:
-                                                            </span>
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                                                                    ${config.credit?.toFixed(2) || '0.00'}
-                                                                </span>
-                                                                <button
-                                                                    onClick={() => handleEditCredit(config.provider, config.credit || 0)}
-                                                                    className="text-blue-500 hover:text-blue-600"
-                                                                    title="Edit credit"
-                                                                >
-                                                                    <Edit className="w-3 h-3" />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-sm text-gray-600 dark:text-gray-400">
-                                                                Tokens:
-                                                            </span>
-                                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                                {(config.totalTokensUsed || 0).toLocaleString()}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
-                                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                                                        Models: {providerModals.length}
-                                                    </p>
-                                                    <div className="mt-2 space-y-1">
-                                                        {providerModals.map((modal) => (
-                                                            <div
-                                                                key={modal._id}
-                                                                className="text-xs text-gray-500 dark:text-gray-500 flex items-center justify-between gap-2"
-                                                            >
-                                                                <div className="flex items-center gap-2">
-                                                                    <span
-                                                                        className={`w-2 h-2 rounded-full ${modal.status === "active"
-                                                                            ? "bg-green-500"
-                                                                            : "bg-gray-400"
-                                                                            }`}
-                                                                    />
-                                                                    {modal.modelId}
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-                    </>
-                )}
-
-                {/* Edit Price Modal */}
-                {editingProvider && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-                            <div className="sticky top-0 bg-white dark:bg-zinc-800 p-6 border-b border-gray-200 dark:border-zinc-700 flex items-center justify-between">
-                                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                                    Edit Provider Settings - {editingProvider}
-                                </h2>
-                                <button
-                                    onClick={() => {
-                                        setEditingProvider(null);
-                                        setEditingModels([]);
-                                        setEditingApiKey("");
-                                    }}
-                                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-
-                            <div className="p-6 space-y-6">
-                                {/* API Key Section */}
-                                <div className="pb-6 border-b border-gray-200 dark:border-zinc-700">
-                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                                        <Key className="w-5 h-5" />
-                                        API Key
-                                    </h3>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Update API Key (optional)
-                                        </label>
-                                        <input
-                                            type="password"
-                                            value={editingApiKey}
-                                            onChange={(e) => setEditingApiKey(e.target.value)}
-                                            placeholder="Leave empty to keep current key"
-                                            className="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-gray-100"
-                                        />
-                                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                                            Enter a new API key only if you want to update it. Leave blank to keep the existing key.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Model Prices Section */}
-                                <div>
-                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                                        Model Pricing
-                                    </h3>
-                                    <div className="space-y-4">
-                                        {editingModels.map((modal) => (
-                                            <div
-                                                key={modal._id}
-                                                className="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-700 rounded-lg"
-                                            >
-                                                <div className="flex-1">
-                                                    <p className="font-medium text-gray-900 dark:text-gray-100">
-                                                        {modal.name}
-                                                    </p>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                        {modal.modelId}
-                                                    </p>
-                                                </div>
-                                                <div className="flex items-center gap-4">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                                                            Input $
-                                                        </span>
-                                                        <input
-                                                            type="number"
-                                                            step="0.01"
-                                                            value={modal.inputPricePerMillion ?? 0}
-                                                            onChange={(e) =>
-                                                                handleUpdatePrice(modal._id, parseFloat(e.target.value) || 0, modal.outputPricePerMillion ?? 0)
-                                                            }
-                                                            className="w-24 px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100"
-                                                        />
-                                                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                                                            /1M
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                                                            Output $
-                                                        </span>
-                                                        <input
-                                                            type="number"
-                                                            step="0.01"
-                                                            value={modal.outputPricePerMillion ?? 0}
-                                                            onChange={(e) =>
-                                                                handleUpdatePrice(modal._id, modal.inputPricePerMillion ?? 0, parseFloat(e.target.value) || 0)
-                                                            }
-                                                            className="w-24 px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100"
-                                                        />
-                                                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                                                            /1M
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="sticky bottom-0 bg-white dark:bg-zinc-800 p-6 border-t border-gray-200 dark:border-zinc-700 flex justify-end gap-3">
-                                <button
-                                    onClick={() => {
-                                        setEditingProvider(null);
-                                        setEditingModels([]);
-                                        setEditingApiKey("");
-                                    }}
-                                    className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-lg"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleSavePrices}
-                                    disabled={saving}
-                                    className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                                >
-                                    {saving ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            Saving...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Save className="w-4 h-4" />
-                                            Save Changes
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Edit Credit Modal */}
-                {editingCredit && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white dark:bg-zinc-800 rounded-lg shadow-xl max-w-md w-full">
-                            <div className="p-6 border-b border-gray-200 dark:border-zinc-700 flex items-center justify-between">
-                                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                                    Edit Credit - {editingCredit.provider}
-                                </h2>
-                                <button
-                                    onClick={() => setEditingCredit(null)}
-                                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-
-                            <div className="p-6">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Credit Amount ($)
-                                </label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    value={editingCredit.credit}
-                                    onChange={(e) =>
-                                        setEditingCredit({
-                                            ...editingCredit,
-                                            credit: parseFloat(e.target.value) || 0
-                                        })
-                                    }
-                                    className="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-gray-100"
-                                    placeholder="Enter credit amount"
-                                />
-                                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                                    This is the total credit budget allocated for this provider
-                                </p>
-                            </div>
-
-                            <div className="p-6 border-t border-gray-200 dark:border-zinc-700 flex justify-end gap-3">
-                                <button
-                                    onClick={() => setEditingCredit(null)}
-                                    className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-lg"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleSaveCredit}
-                                    disabled={saving}
-                                    className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                                >
-                                    {saving ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            Saving...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Save className="w-4 h-4" />
-                                            Save Credit
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-            </div>
-        </div>
-        </>
+  const handleEditProvider = (provider: string) => {
+    const providerModels = models.filter((m) => m.provider === provider);
+    setEditingModels(
+      providerModels.map((m) => ({
+        ...m,
+        inputPricePerMillion: m.inputPricePerMillion ?? 0,
+        outputPricePerMillion: m.outputPricePerMillion ?? 0,
+      }))
     );
+
+    setEditingProvider(provider);
+    setEditingApiKey("");
+    setEditingCredit({
+      provider,
+      credit: providerConfigs.find((p) => p.provider === provider)?.credit ?? 0,
+    });
+  };
+
+  const handleSaveEditProvider = async () => {
+    if (!editingProvider) return;
+    setSaving(true);
+
+    try {
+      if (editingApiKey) {
+        await fetch("/api/provider-configs", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            provider: editingProvider,
+            api_key: editingApiKey,
+          }),
+        });
+      }
+
+      if (editingCredit) {
+        await fetch("/api/provider-configs", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(editingCredit),
+        });
+      }
+
+      for (const modal of editingModels) {
+        await fetch("/api/modals", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            _id: modal._id,
+            inputPricePerMillion: modal.inputPricePerMillion,
+            outputPricePerMillion: modal.outputPricePerMillion,
+          }),
+        });
+      }
+
+      await fetchData();
+      setEditingProvider(null);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleModelPriceChange = (
+    id: string,
+    input: number,
+    output: number
+  ) => {
+    setEditingModels((prev) =>
+      prev.map((m) =>
+        m._id === id
+          ? {
+              ...m,
+              inputPricePerMillion: input,
+              outputPricePerMillion: output,
+            }
+          : m
+      )
+    );
+  };
+
+  if (loading)
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-zinc-900 text-white">
+        <Loader2 className="w-10 h-10 animate-spin" />
+      </div>
+    );
+
+  return (
+    <div className="min-h-screen bg-zinc-900 p-4 text-white">
+      <div className="flex justify-end mb-4">
+        <SideMenu />
+      </div>
+
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Add Provider */}
+        <div className="bg-zinc-800 p-6 rounded-lg shadow">
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <select
+              value={selectedProvider}
+              onChange={(e) => setSelectedProvider(e.target.value)}
+              className="px-4 py-2 border border-zinc-600 rounded-lg bg-zinc-700 text-white text-xs sm:text-sm xl:text-base outline-none"
+            >
+              <option value="">Choose Provider</option>
+              {providers
+                .filter((p) => !providerConfigs.find((c) => c.provider === p.name))
+                .map((p) => (
+                  <option key={p.name} value={p.name}>
+                    {p.name}
+                  </option>
+                ))}
+            </select>
+
+            {selectedProvider && (
+              <input
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="API Key"
+                className="px-4 py-2 border border-zinc-600 rounded-lg bg-zinc-700 text-white placeholder-gray-400 text-xs sm:text-sm xl:text-base outline-none"
+              />
+            )}
+
+            {selectedProvider && (
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={initialCredit}
+                onChange={(e) =>
+                  setInitialCredit(parseFloat(e.target.value) || 0)
+                }
+                placeholder="Credit $"
+                className="px-4 py-2 border border-zinc-600 rounded-lg bg-zinc-700 text-white placeholder-gray-400 text-xs sm:text-sm xl:text-base outline-none"
+              />
+            )}
+          </div>
+
+          {selectedProvider && (
+            <div className="mt-4 flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setSelectedProvider("");
+                  setApiKey("");
+                  setInitialCredit(0);
+                }}
+                className="px-4 py-2 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-white text-xs sm:text-sm xl:text-base cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              <button
+                disabled={!apiKey || saving}
+                onClick={handleSaveProvider}
+                className="px-6 py-2 bg-black text-white border border-zinc-700 rounded-lg flex gap-2 items-center text-xs sm:text-sm xl:text-base cursor-pointer hover:bg-zinc-900"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" /> Save
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Provider Grid */}
+        {providerConfigs.length === 0 ? (
+          <div className="p-8 text-center bg-zinc-800 rounded-lg shadow">
+            <p className="text-xs sm:text-sm xl:text-base text-gray-400">No providers added yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {providerConfigs.map((config) => (
+              <ProviderCard
+                key={config.provider}
+                config={config}
+                models={models.filter((m) => m.provider === config.provider)}
+                onEdit={handleEditProvider}
+                onDelete={handleDeleteProvider}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Edit Provider Modal */}
+      {editingProvider && (
+        <ModalShell
+          title={`Edit Provider - ${editingProvider}`}
+          onClose={() => setEditingProvider(null)}
+          footer={
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setEditingProvider(null)}
+                className="px-4 py-2 text-xs sm:text-sm xl:text-base rounded-lg bg-zinc-700 hover:bg-zinc-600 text-white cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleSaveEditProvider}
+                disabled={saving}
+                className="px-6 py-2 text-xs sm:text-sm xl:text-base bg-black border border-zinc-700 text-white rounded-lg flex gap-2 items-center cursor-pointer hover:bg-zinc-900"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" /> Save Changes
+                  </>
+                )}
+              </button>
+            </div>
+          }
+        >
+          <div className="space-y-6 text-xs sm:text-sm xl:text-base">
+
+            {/* API Key */}
+            <div>
+              <h4 className="font-semibold mb-2 text-xs sm:text-sm xl:text-lg flex items-center gap-2 text-white">
+                <Key className="w-5 h-5" /> API Key
+              </h4>
+
+              <input
+                type="password"
+                value={editingApiKey}
+                onChange={(e) => setEditingApiKey(e.target.value)}
+                placeholder="Leave empty to keep existing"
+                className="w-full px-4 py-2 border border-zinc-600 rounded-lg bg-zinc-700 text-white placeholder-gray-400 text-xs sm:text-sm xl:text-base"
+              />
+            </div>
+
+            {/* Credit */}
+            <div>
+              <h4 className="font-semibold mb-2 text-xs sm:text-sm xl:text-lg text-white">
+                Credit
+              </h4>
+
+              <input
+                type="number"
+                step="0.01"
+                value={editingCredit?.credit ?? 0}
+                onChange={(e) =>
+                  setEditingCredit({
+                    provider: editingProvider,
+                    credit: parseFloat(e.target.value) || 0,
+                  })
+                }
+                className="w-full px-4 py-2 border border-zinc-600 rounded-lg bg-zinc-700 text-white text-xs sm:text-sm xl:text-base"
+              />
+            </div>
+
+            {/* Models */}
+            <div className="space-y-3">
+              <h4 className="font-semibold text-xs sm:text-sm xl:text-lg text-white">
+                Model Pricing
+              </h4>
+
+              {editingModels.map((m) => (
+                <ModelPriceRow
+                  key={m._id}
+                  model={m}
+                  onChange={handleModelPriceChange}
+                />
+              ))}
+            </div>
+          </div>
+        </ModalShell>
+      )}
+    </div>
+  );
 }
