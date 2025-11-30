@@ -327,21 +327,6 @@ export default function ProfilePage() {
                 <SideMenu/>
             </div>
             <div className="max-w-7xl mx-auto">
-                {/* Tab Navigation */}
-                <div className="mb-6 border-b border-gray-200 dark:border-zinc-700">
-                    <div className="flex gap-4">
-                        <button
-                            onClick={() => setActiveTab('providers')}
-                            className={`px-4 py-3 font-medium transition-colors border-b-2 ${activeTab === 'providers'
-                                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                                }`}
-                        >
-                            AI Providers
-                        </button>
-                    </div>
-                </div>
-
                 {/* AI Providers Tab */}
                 {activeTab === 'providers' && (
                     <>

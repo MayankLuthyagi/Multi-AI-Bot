@@ -233,95 +233,8 @@ export default function SideMenu({
                 </div>
                 {pathname === '/dashboard' && (
                     <div className="flex-1 overflow-hidden flex flex-col">
-                        {/* AI Modals Section */}
-                        <div className="p-4 border-b border-gray-200 dark:border-zinc-700 flex-shrink-0">
-                            {loading ? (
-                                <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
-                                    Loading modals...
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="space-y-1 max-h-70 overflow-y-auto pr-2 sidebar-scroll">
-                                        {/* All Models Toggle */}
-                                        <div
-                                            className={`p-2 rounded-lg border-2 transition-all ${modals.length > 0 && modals.every(m => m.status === 'active')
-                                                ? "border-black bg-[#131111]"
-                                                : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900"
-                                                }`}
-                                        >
-                                            <div className="flex items-start justify-between gap-2">
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
-                                                            All Models
-                                                        </div>
-                                                        {modals.length > 0 && modals.every(m => m.status === 'active') && (
-                                                            <span className="flex-shrink-0 h-2 w-2 rounded-full bg-green-500"></span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <AllToggleButton modals={modals} onBulkUpdate={async (newStatus: string) => {
-                                                    // Call backend to set all statuses
-                                                    try {
-                                                        const res = await fetch('/api/modals', {
-                                                            method: 'PATCH',
-                                                            headers: { 'Content-Type': 'application/json' },
-                                                            body: JSON.stringify({ action: 'setAllStatus', status: newStatus })
-                                                        });
-                                                        const data = await res.json();
-                                                        if (data.success) {
-                                                            // Refresh modals list
-                                                            fetchModals();
-                                                            if (onModalUpdate) onModalUpdate();
-                                                        } else {
-                                                            alert('Failed to update all models: ' + (data.error || 'unknown'));
-                                                        }
-                                                    } catch (err) {
-                                                        console.error('Bulk update failed', err);
-                                                        alert('Bulk update failed');
-                                                    }
-                                                }} />
-                                            </div>
-                                        </div>
-                                        {modals.map((modal) => (
-                                            <div
-                                                key={modal._id}
-                                                className={`p-2 rounded-lg border-2 transition-all ${modal.status === "active"
-                                                    ? "border-black bg-[#131111]"
-                                                    : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900"
-                                                    }`}
-                                            >
-                                                <div className="flex items-start justify-between gap-2">
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2 mb-1">
-                                                            <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
-                                                                {modal.name} ({modal.provider})
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <button
-                                                        onClick={() => toggleModalStatus(modal._id, modal.status)}
-                                                        className={`flex-shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${modal.status === "active"
-                                                            ? "bg-[#131111] border-white border"
-                                                            : "bg-zinc-400"
-                                                            }`}
-                                                        title={modal.status === "active" ? "Deactivate" : "Activate"}
-                                                    >
-                                                        <span
-                                                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${modal.status === "active" ? "translate-x-6" : "translate-x-1"
-                                                                }`}
-                                                        />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </>
-                            )}
-                        </div>
-
                         {/* Chat Sessions Section */}
-                        <div className="p-4 flex-1 overflow-hidden flex flex-col">
+                        <div className="p-4 flex-1 overflow-hidden flex flex-col border-b border-zinc-700">
                             <div className="flex items-center justify-between mb-3 flex-shrink-0">
                                 <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                                     Chat History {sessions.length > 0 && (
@@ -422,6 +335,89 @@ export default function SideMenu({
                                 <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
                                     No chat sessions yet
                                 </div>
+                            )}
+                        </div>                        
+                        {/* AI Modals Section */}
+                        <div className="p-4 border-b border-gray-200 dark:border-zinc-700 flex-shrink-0">
+                            {loading ? (
+                                <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                                    Loading modals...
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="space-y-1 max-h-70 overflow-y-auto pr-2 sidebar-scroll">
+                                        {/* All Models Toggle */}
+                                        <div
+                                            className={`p-2 rounded-lg border-2 transition-all ${modals.length > 0 && modals.every(m => m.status === 'active')
+                                                ? "border-black bg-[#131111]"
+                                                : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900"
+                                                }`}
+                                        >
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
+                                                            All Models
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <AllToggleButton modals={modals} onBulkUpdate={async (newStatus: string) => {
+                                                    // Call backend to set all statuses
+                                                    try {
+                                                        const res = await fetch('/api/modals', {
+                                                            method: 'PATCH',
+                                                            headers: { 'Content-Type': 'application/json' },
+                                                            body: JSON.stringify({ action: 'setAllStatus', status: newStatus })
+                                                        });
+                                                        const data = await res.json();
+                                                        if (data.success) {
+                                                            // Refresh modals list
+                                                            fetchModals();
+                                                            if (onModalUpdate) onModalUpdate();
+                                                        } else {
+                                                            alert('Failed to update all models: ' + (data.error || 'unknown'));
+                                                        }
+                                                    } catch (err) {
+                                                        console.error('Bulk update failed', err);
+                                                        alert('Bulk update failed');
+                                                    }
+                                                }} />
+                                            </div>
+                                        </div>
+                                        {modals.map((modal) => (
+                                            <div
+                                                key={modal._id}
+                                                className={`p-2 rounded-lg border-2 transition-all ${modal.status === "active"
+                                                    ? "border-black bg-[#131111]"
+                                                    : "border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-900"
+                                                    }`}
+                                            >
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <div className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate">
+                                                                {modal.name} ({modal.provider})
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => toggleModalStatus(modal._id, modal.status)}
+                                                        className={`flex-shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${modal.status === "active"
+                                                            ? "bg-[#131111] border-white border"
+                                                            : "bg-zinc-400"
+                                                            }`}
+                                                        title={modal.status === "active" ? "Deactivate" : "Activate"}
+                                                    >
+                                                        <span
+                                                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${modal.status === "active" ? "translate-x-6" : "translate-x-1"
+                                                                }`}
+                                                        />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
                             )}
                         </div>
                     </div>

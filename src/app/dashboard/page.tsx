@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Bot, Send, Loader2, ThumbsUp, ThumbsDown, Copy, ImagePlus, X, Search } from "lucide-react";
+import { Bot, Send, Loader2, ThumbsUp, ThumbsDown, Copy, ImagePlus, X, Search, SendHorizontal } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -778,10 +778,10 @@ export default function DashboardPage() {
                             onClick={() => setWebSearchEnabled(!webSearchEnabled)}
                             disabled={isSending || modals.length === 0}
                             className={`p-2 sm:p-3 rounded-full transition-all flex-shrink-0 cursor-pointer ${webSearchEnabled
-                                ? 'bg-[#131111] text-white hover:bg-black'
-                                : 'bg-[#38343a] text-white hover:bg-[#4a4750]'
+                                ? 'bg-blue-800 text-white'
+                                : 'bg-[#38343a] text-white'
                                 } disabled:bg-gray-500 disabled:cursor-not-allowed`}
-                            title={webSearchEnabled ? "Web search enabled" : "Enable web search"}
+                            title={webSearchEnabled ? "Web search on" : "Web search off"}
                         >
                             <Search className="h-5 w-5 sm:h-6 sm:w-6" />
                         </button>
@@ -846,11 +846,12 @@ export default function DashboardPage() {
                             onClick={sendToAllModals}
                             disabled={isSending || !inputValue.trim() || modals.length === 0}
                             className="p-2 sm:p-3 rounded-full bg-[#4a4750] text-white hover:bg-[#4a4750] disabled:bg-[#38343a] cursor-pointer transition-all flex-shrink-0"
+                            title="Send message"
                         >
                             {isSending ? (
                                 <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
                             ) : (
-                                <Send className="h-5 w-5 sm:h-6 sm:w-6" />
+                                <SendHorizontal  className="h-5 w-5 sm:h-6 sm:w-6" />
                             )}
                         </button>
                     </div>
