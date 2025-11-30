@@ -649,7 +649,7 @@ export default function DashboardPage() {
                                                         className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
                                                     >
                                                         <div
-                                                            className={`max-w-[95%] rounded-lg px-3 py-2 text-xs sm:text-sm xl:text-base ${msg.role === "user"
+                                                            className={`max-w-[95%] rounded-lg px-3 py-2 text-xs sm:text-sm xl:text-base break-words overflow-hidden ${msg.role === "user"
                                                                 ? "bg-blue-600 text-white"
                                                                 : "bg-zinc-700 text-gray-100"
                                                                 }`}
@@ -663,10 +663,10 @@ export default function DashboardPage() {
                                                                             className="max-w-full rounded mb-2 max-h-60 object-contain"
                                                                         />
                                                                     )}
-                                                                    <pre className="whitespace-pre-wrap font-sans">{msg.content}</pre>
+                                                                    <pre className="whitespace-pre-wrap font-sans break-words">{msg.content}</pre>
                                                                 </>
                                                             ) : (
-                                                                <div className="prose prose-invert prose-sm max-w-none prose-p:my-2 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-table:my-2">
+                                                                <div className="prose prose-invert prose-sm max-w-none prose-p:my-2 prose-headings:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-table:my-2 break-words">
                                                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                                                         {msg.content}
                                                                     </ReactMarkdown>
