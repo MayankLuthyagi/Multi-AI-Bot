@@ -8,7 +8,6 @@ Omni is a versatile AI chatbot platform that connects you with multiple AI provi
 * **Persistent chat sessions** – Your conversation history stays intact
 * **Cost tracking** – Monitor token usage and provider expenses
 * **Provider analytics** – View detailed statistics about your AI usage
-* **Coin price data** – Access cryptocurrency market information
 * **Modular architecture** – Easily extend with new features or providers
 
 ## **Tech Stack**
