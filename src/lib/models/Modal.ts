@@ -150,8 +150,8 @@ export const PROVIDER_TEMPLATES: ProviderTemplate[] = [
         defaultRequestType: 'chat',
         defaultResponsePath: 'choices[0].message.content',
         availableModels: [
-            { id: 'grok-beta', name: 'Grok Beta', inputPricePerMillion: 5.00, outputPricePerMillion: 15.00 },
-            { id: 'grok-vision-beta', name: 'Grok Vision Beta', inputPricePerMillion: 5.00, outputPricePerMillion: 15.00 },
+            { id: 'grok-4-1-fast-non-reasoning', name: 'Grok 4.1 Fast', inputPricePerMillion: 0.2, outputPricePerMillion: 0.5 },
+            { id: 'grok-4-1-fast-reasoning', name: 'Grok 4.1 Reasoning', inputPricePerMillion: 5.00, outputPricePerMillion: 15.00 },
         ],
         requiresAuth: true,
         headerTemplate: {
