@@ -562,7 +562,8 @@ export default function DashboardPage() {
             'perplexity ai': '/logo/perplexityai.png',
             'zhipu ai': '/logo/zhipuai.png',
             'moonshot ai': '/logo/moonshotai.png',
-            'mistral ai': '/logo/mistralai.png'
+            'mistral ai': '/logo/mistralai.png',
+            'xai': '/logo/grok.png',
         };
         return logoMap[providerLower] || null;
     };
