@@ -162,32 +162,21 @@ function buildRequestBody(provider: string, modelId: string, message: string, co
         }
     }
 
-
-    // Providers that need custom web_search tool
-    const needsWebSearchTool = !['OpenAI', 'Google', 'Perplexity AI', 'Zhipu AI'].includes(provider);
-
     switch (provider) {
         case 'OpenAI':
         case 'DeepSeek':
         case 'xAI':
-        case 'Perplexity AI':
         case 'Mistral AI':
         case 'Moonshot AI':
+        case 'Perplexity AI':
             const openaiBody: any = {
                 model: modelId,
                 messages: messages,
                 ...baseParams,
             };
 
-            if (provider === 'OpenAI' && webSearchEnabled) {
-                // Convert modelId → with-search model
-                if (!modelId.includes('-with-search')) {
-                    openaiBody.model = `${modelId}-with-search`;
-                }
-            }
-
-            // Add web_search tool for DeepSeek, xAI, Mistral AI, and Moonshot AI
-            if ((provider === 'DeepSeek' || provider === 'xAI' || provider === 'Mistral AI' || provider === 'Moonshot AI') && webSearchEnabled) {
+            // Add Tavily search tool for ALL except Perplexity
+            if (webSearchEnabled && provider !== 'Perplexity AI') {
                 openaiBody.tools = [WEB_SEARCH_TOOL];
             }
 
@@ -200,61 +189,21 @@ function buildRequestBody(provider: string, modelId: string, message: string, co
                 ...baseParams,
             };
 
+            // Add Tavily tool (Zhipu native search removed)
             if (webSearchEnabled) {
-                zhipuBody.tools = [
-                    {
-                        type: "web_search",
-                        web_search: {}
-                    }
-                ];
+                zhipuBody.tools = [WEB_SEARCH_TOOL];
             }
 
             return zhipuBody;
 
-
         case 'Anthropic':
-            // Anthropic vision format is slightly different and needs to be handled inline
-            // We rely on the `messages` array being correctly prepared *before* this function call 
-            // if it includes vision data in the conversationHistory. 
-            // For the current request (image/message), the logic below handles the formatting.
-            if (image) {
-                const matches = image.match(/^data:([^;]+);base64,(.+)$/);
-                if (matches) {
-                    const mediaType = matches[1];
-                    const base64Data = matches[2];
-
-                    const visionMessage: any = {
-                        role: 'user',
-                        content: [
-                            {
-                                type: 'image',
-                                source: {
-                                    type: 'base64',
-                                    media_type: mediaType,
-                                    data: base64Data
-                                }
-                            },
-                            { type: 'text', text: message }
-                        ]
-                    };
-
-                    // Reconstruct messages array (this overwrites the push at line 147 if an image is present)
-                    // Note: In the tool-call retry case, `message` is empty and `image` is undefined, 
-                    // so this block is skipped, and the pre-constructed `messages` (conversationHistory) is used.
-                    messages = conversationHistory && conversationHistory.length > 0
-                        ? [...conversationHistory, visionMessage]
-                        : [visionMessage];
-                }
-            }
-
-
             const anthropicBody: any = {
                 model: modelId,
                 messages: messages,
                 max_tokens: 1000,
             };
 
-            // Add web_search tool for Anthropic (uses different format)
+            // Tavily search for Anthropic
             if (webSearchEnabled) {
                 anthropicBody.tools = [ANTHROPIC_WEB_SEARCH_TOOL];
             }
@@ -262,58 +211,20 @@ function buildRequestBody(provider: string, modelId: string, message: string, co
             return anthropicBody;
 
         case 'Google':
-            // Google uses a different format - convert messages to contents
-            let contents = conversationHistory && conversationHistory.length > 0
-                ? conversationHistory.map(msg => ({
-                    role: msg.role === 'assistant' ? 'model' : 'user',
-                    // Handle complex content like image/tool results if they exist in history (simplified here for text only)
-                    parts: Array.isArray(msg.content) ? msg.content : [{ text: msg.content }]
-                }))
-                : [];
-
-            // Add current message with image if present
-            if (message || image) {
-                let parts: any[] = [];
-                if (image) {
-                    const matches = image.match(/^data:([^;]+);base64,(.+)$/);
-                    if (matches) {
-                        const mimeType = matches[1];
-                        const base64Data = matches[2];
-                        parts.push(
-                            { text: message },
-                            {
-                                inline_data: {
-                                    mime_type: mimeType,
-                                    data: base64Data
-                                }
-                            } as any
-                        );
-                    }
-                } else {
-                    parts.push({ text: message });
-                }
-
-                // Only push the current turn if it has content (message or image)
-                if (parts.length > 0) {
-                    contents.push({ role: 'user', parts: parts });
-                }
-            }
-
             const googleBody: any = {
-                contents: contents,
+                contents: messages.map(m => ({
+                    role: m.role === 'assistant' ? 'model' : 'user',
+                    parts: [{ text: m.content }]
+                })),
                 generationConfig: {
                     temperature: 0.7,
-                    maxOutputTokens: 1000,
+                    maxOutputTokens: 1000
                 }
             };
 
-            // Add web search for Google if enabled
+            // Add Tavily search tool
             if (webSearchEnabled) {
-                googleBody.tools = [{ google_search: {} }];
-                googleBody.generationConfig = {
-                    ...googleBody.generationConfig,
-                    enable_grounding: true,
-                };
+                googleBody.tools = [WEB_SEARCH_TOOL];
             }
 
             return googleBody;
@@ -324,13 +235,14 @@ function buildRequestBody(provider: string, modelId: string, message: string, co
                 ...baseParams,
             };
 
-            // Add web_search tool for other providers if enabled
-            if (webSearchEnabled && needsWebSearchTool) {
+            // Add Tavily search for all others
+            if (webSearchEnabled) {
                 defaultBody.tools = [WEB_SEARCH_TOOL];
             }
 
             return defaultBody;
     }
+
 }
 
 export async function POST(request: NextRequest) {
